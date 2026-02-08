@@ -24,6 +24,7 @@ export default function DevicesPage() {
         setSelectedDevice,
         isLoading,
         addDevice,
+        addMultipleDevices,
         removeDevice,
         exportDevice,
     } = useDevices();
@@ -74,6 +75,9 @@ export default function DevicesPage() {
                     <div className="py-4">
                         <ImportDevice onImport={async (d) => {
                             await addDevice(d);
+                            setIsImportOpen(false);
+                        }} onImportMultiple={async (files) => {
+                            await addMultipleDevices(files);
                             setIsImportOpen(false);
                         }} isLoading={isLoading} />
                     </div>

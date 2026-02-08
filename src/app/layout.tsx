@@ -3,7 +3,6 @@ import "./globals.css";
 
 import { ThemeProvider } from "@/components/theme-provider";
 import { SidebarConfigProvider } from "@/contexts/sidebar-context";
-import { DevicesProvider } from "@/contexts/DevicesContext";
 import { inter } from "@/lib/fonts";
 
 import { Toaster } from "@/components/ui/sonner";
@@ -23,10 +22,8 @@ export default function RootLayout({
       <body className={inter.className} suppressHydrationWarning={true}>
         <ThemeProvider defaultTheme="system" storageKey="nextjs-ui-theme">
           <SidebarConfigProvider>
-            <DevicesProvider>
-              {children}
-              <Toaster />
-            </DevicesProvider>
+            {children}
+            <Toaster />
           </SidebarConfigProvider>
         </ThemeProvider>
       </body>

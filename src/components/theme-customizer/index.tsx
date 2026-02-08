@@ -7,6 +7,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useThemeManager } from '@/hooks/use-theme-manager'
 import { useSidebarConfig } from '@/contexts/sidebar-context'
+import { useAppearanceStore } from '@/stores/useAppearanceStore'
 import { tweakcnThemes } from '@/config/theme-data'
 import { ThemeTab } from './theme-tab'
 import { LayoutTab } from './layout-tab'
@@ -21,43 +22,36 @@ interface ThemeCustomizerProps {
 
 
 export function CustomizerContent({ className }: { className?: string }) {
-  const { applyImportedTheme, isDarkMode, resetTheme, applyRadius, setBrandColorsValues, applyTheme, applyTweakcnTheme } = useThemeManager()
+  const { applyImportedTheme, isDarkMode, resetTheme, applyRadius, setBrandColorsValues: setManagerBrandColors, applyTheme, applyTweakcnTheme } = useThemeManager()
   const { config: sidebarConfig, updateConfig: updateSidebarConfig } = useSidebarConfig()
 
+  const {
+    selectedTheme, setSelectedTheme,
+    selectedTweakcnTheme, setSelectedTweakcnTheme,
+    selectedRadius, setSelectedRadius,
+    importedTheme, setImportedTheme,
+    brandColorsValues, setBrandColorsValues,
+    resetAppearance,
+  } = useAppearanceStore()
+
   const [activeTab, setActiveTab] = React.useState("theme")
-  const [selectedTheme, setSelectedTheme] = React.useState("default")
-  const [selectedTweakcnTheme, setSelectedTweakcnTheme] = React.useState("")
-  const [selectedRadius, setSelectedRadius] = React.useState("0.5rem")
   const [importModalOpen, setImportModalOpen] = React.useState(false)
-  const [importedTheme, setImportedTheme] = React.useState<ImportedTheme | null>(null)
 
   const handleReset = () => {
-    // Complete reset to application defaults
+    // Reset Zustand store
+    resetAppearance()
 
-    // 1. Reset all state variables to initial values
-    setSelectedTheme("default")
-    setSelectedTweakcnTheme("")
-    setSelectedRadius("0.5rem")
-    setImportedTheme(null) // Clear imported theme
-    setBrandColorsValues({}) // Clear brand colors state
-
-    // 2. Completely remove all custom CSS variables
+    // Reset CSS variables
     resetTheme()
-
-    // 3. Reset the radius to default
     applyRadius("0.5rem")
+    setManagerBrandColors({})
 
-    // 4. Reset sidebar to defaults
+    // Reset sidebar
     updateSidebarConfig({ variant: "inset", collapsible: "offcanvas", side: "left" })
   }
 
   const handleImport = (themeData: ImportedTheme) => {
     setImportedTheme(themeData)
-    // Clear other selections to indicate custom import is active
-    setSelectedTheme("")
-    setSelectedTweakcnTheme("")
-
-    // Apply the imported theme
     applyImportedTheme(themeData, isDarkMode)
   }
 
@@ -65,19 +59,23 @@ export function CustomizerContent({ className }: { className?: string }) {
     setImportModalOpen(true)
   }
 
-  // Re-apply themes when theme mode changes
+  // Apply persisted theme on mount + when dark mode changes
   React.useEffect(() => {
     if (importedTheme) {
       applyImportedTheme(importedTheme, isDarkMode)
-    } else if (selectedTheme) {
-      applyTheme(selectedTheme, isDarkMode)
     } else if (selectedTweakcnTheme) {
       const selectedPreset = tweakcnThemes.find(t => t.value === selectedTweakcnTheme)?.preset
       if (selectedPreset) {
         applyTweakcnTheme(selectedPreset, isDarkMode)
       }
+    } else if (selectedTheme && selectedTheme !== 'default') {
+      applyTheme(selectedTheme, isDarkMode)
     }
-  }, [isDarkMode, importedTheme, selectedTheme, selectedTweakcnTheme, applyImportedTheme, applyTheme, applyTweakcnTheme])
+
+    if (selectedRadius && selectedRadius !== '0.5rem') {
+      applyRadius(selectedRadius)
+    }
+  }, [isDarkMode, importedTheme, selectedTheme, selectedTweakcnTheme, selectedRadius, applyImportedTheme, applyTheme, applyTweakcnTheme, applyRadius])
 
   return (
     <div className={cn("flex flex-col space-y-4", className)}>
@@ -101,13 +99,6 @@ export function CustomizerContent({ className }: { className?: string }) {
 
         <TabsContent value="theme" className="flex-1 mt-0 space-y-4">
           <ThemeTab
-            selectedTheme={selectedTheme}
-            setSelectedTheme={setSelectedTheme}
-            selectedTweakcnTheme={selectedTweakcnTheme}
-            setSelectedTweakcnTheme={setSelectedTweakcnTheme}
-            selectedRadius={selectedRadius}
-            setSelectedRadius={setSelectedRadius}
-            setImportedTheme={setImportedTheme}
             onImportClick={handleImportClick}
           />
         </TabsContent>

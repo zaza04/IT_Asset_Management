@@ -1,5 +1,5 @@
-import { useDevicesContext } from '@/contexts/DevicesContext';
+import { useDeviceStore } from '@/stores/useDeviceStore';
 
 export const useDevices = () => {
-    return useDevicesContext();
+    return useDeviceStore();
 };
