@@ -1,58 +1,77 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Device } from "@/types/device"
-import { Laptop, Clock } from "lucide-react"
+"use client"
+
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Device, DeviceStatus, DEVICE_STATUS_CONFIG } from "@/types/device"
+import { SoftLabel } from "@/components/ui/soft-label"
 
 interface RecentActivityProps {
     devices: Device[]
 }
 
+const DOT_COLORS: Record<DeviceStatus, string> = {
+    active: 'bg-emerald-500',
+    broken: 'bg-red-500',
+    inactive: 'bg-gray-400',
+}
+
+function timeAgo(dateStr: string): string {
+    const now = Date.now();
+    const diff = now - new Date(dateStr).getTime();
+    const minutes = Math.floor(diff / 60000);
+    if (minutes < 1) return 'Vừa xong';
+    if (minutes < 60) return `${minutes}m trước`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h trước`;
+    const days = Math.floor(hours / 24);
+    if (days < 30) return `${days}d trước`;
+    return new Date(dateStr).toLocaleDateString('vi-VN');
+}
+
 export function RecentActivity({ devices }: RecentActivityProps) {
-    // Sort devices by lastUpdate descending and take top 5
     const recentDevices = [...devices]
-        .sort((a, b) => {
-            const dateA = new Date(a.deviceInfo.lastUpdate).getTime();
-            const dateB = new Date(b.deviceInfo.lastUpdate).getTime();
-            return dateB - dateA;
-        })
-        .slice(0, 5);
+        .sort((a, b) => new Date(b.metadata.importedAt).getTime() - new Date(a.metadata.importedAt).getTime())
+        .slice(0, 6);
 
     return (
-        <Card className="col-span-3">
-            <CardHeader>
-                <CardTitle>Recent Activity</CardTitle>
-                <CardDescription>
-                    Latest {recentDevices.length} updated devices
-                </CardDescription>
+        <Card className="h-full">
+            <CardHeader className="pb-2">
+                <CardTitle className="text-base font-semibold">Recent Activity</CardTitle>
             </CardHeader>
             <CardContent>
-                <div className="space-y-8">
-                    {recentDevices.map((device) => (
-                        <div key={device.id} className="flex items-center">
-                            <Avatar className="h-9 w-9">
-                                <AvatarImage src={`https://avatar.vercel.sh/${device.id}.png`} alt={device.deviceInfo.name} />
-                                <AvatarFallback>
-                                    <Laptop className="h-4 w-4" />
-                                </AvatarFallback>
-                            </Avatar>
-                            <div className="ml-4 space-y-1">
-                                <p className="text-sm font-medium leading-none">{device.deviceInfo.name}</p>
-                                <p className="text-sm text-muted-foreground">
-                                    {device.deviceInfo.os} • {device.deviceInfo.ram}
-                                </p>
-                            </div>
-                            <div className="ml-auto flex items-center text-sm text-muted-foreground">
-                                <Clock className="mr-1 h-3 w-3" />
-                                {device.deviceInfo.lastUpdate}
-                            </div>
+                {recentDevices.length === 0 ? (
+                    <div className="text-center text-muted-foreground py-8 text-sm">
+                        No activity yet
+                    </div>
+                ) : (
+                    <div className="relative">
+                        <div className="absolute left-[7px] top-2 bottom-2 w-px bg-border" />
+                        <div className="space-y-4">
+                            {recentDevices.map((device) => {
+                                const status = device.status ?? 'active'
+                                const config = DEVICE_STATUS_CONFIG[status]
+                                return (
+                                    <div key={device.id} className="relative flex items-start gap-3 pl-6">
+                                        <span className={`absolute left-0 top-1.5 h-[14px] w-[14px] rounded-full border-2 border-background ${DOT_COLORS[status]} z-10`} />
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 mb-0.5">
+                                                <p className="text-sm font-medium truncate">{device.deviceInfo.name}</p>
+                                                <SoftLabel color={config.softColor} size="sm">
+                                                    {config.label}
+                                                </SoftLabel>
+                                            </div>
+                                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                                <span>{device.deviceInfo.os}</span>
+                                                <span>•</span>
+                                                <span>{device.deviceInfo.ram}</span>
+                                                <span className="ml-auto">{timeAgo(device.metadata.importedAt)}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )
+                            })}
                         </div>
-                    ))}
-                    {recentDevices.length === 0 && (
-                        <div className="text-center text-muted-foreground py-4">
-                            No activity recorded
-                        </div>
-                    )}
-                </div>
+                    </div>
+                )}
             </CardContent>
         </Card>
     )

@@ -40,6 +40,14 @@ import { SheetTable } from './SheetTable';
 import { Input } from '@/components/ui/input';
 import { useState, useMemo } from 'react';
 import { useDeviceStore } from '@/stores/useDeviceStore';
+import { SoftLabel } from '@/components/ui/soft-label';
+
+// Dot colors cho status selector
+const STATUS_DOT_COLORS: Record<DeviceStatus, string> = {
+    active: 'bg-emerald-500',
+    broken: 'bg-red-500',
+    inactive: 'bg-gray-400',
+};
 
 interface DeviceDetailProps {
     device: Device | null;
@@ -115,7 +123,7 @@ export function DeviceDetail({
                                         <SelectContent>
                                             {Object.entries(DEVICE_STATUS_CONFIG).map(([key, config]) => (
                                                 <SelectItem key={key} value={key}>
-                                                    <span className={`mr-1.5 h-2 w-2 rounded-full ${config.color} inline-block`} />
+                                                    <span className={`mr-1.5 h-2 w-2 rounded-full ${STATUS_DOT_COLORS[key as DeviceStatus]} inline-block`} />
                                                     {config.label}
                                                 </SelectItem>
                                             ))}

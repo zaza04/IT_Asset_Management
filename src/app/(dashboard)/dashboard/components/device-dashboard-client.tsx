@@ -1,9 +1,11 @@
 "use client"
 
 import { StatsCards } from "@/components/dashboard/StatsCards"
+import { StatusDonut } from "@/components/dashboard/StatusDonut"
+import { ImportTimeline } from "@/components/dashboard/ImportTimeline"
 import { DeviceOSChart } from "@/components/dashboard/DeviceOSChart"
+import { HardwareOverview } from "@/components/dashboard/HardwareOverview"
 import { RecentActivity } from "@/components/dashboard/RecentActivity"
-import { StorageChart } from "@/components/dashboard/StorageChart"
 import { useDevices } from "@/hooks/useDevices"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -39,28 +41,44 @@ export function DeviceDashboardClient() {
         )
     }
 
+    const now = new Date()
+    const greeting = now.getHours() < 12 ? 'Chào buổi sáng' : now.getHours() < 18 ? 'Chào buổi chiều' : 'Chào buổi tối'
+
     return (
-        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-            {/* Quick actions */}
-            <div className="flex items-center justify-end">
+        <div className="flex flex-1 flex-col gap-5 p-4 pt-0">
+            {/* Header greeting */}
+            <div className="flex items-center justify-between">
+                <div>
+                    <h2 className="text-2xl font-bold tracking-tight">{greeting} 👋</h2>
+                    <p className="text-sm text-muted-foreground">
+                        {now.toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                    </p>
+                </div>
                 <Button variant="outline" size="sm" onClick={() => router.push('/devices')}>
                     <Upload className="mr-2 h-4 w-4" />
                     Import thêm
                 </Button>
             </div>
 
+            {/* Row 1 — Stats Cards */}
             <StatsCards devices={devices} />
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-                <div className="col-span-4">
-                    <DeviceOSChart devices={devices} />
+            {/* Row 2 — Hero Charts */}
+            <div className="grid gap-4 lg:grid-cols-5">
+                <div className="lg:col-span-2">
+                    <StatusDonut devices={devices} />
                 </div>
-                <div className="col-span-3">
-                    <RecentActivity devices={devices} />
+                <div className="lg:col-span-3">
+                    <ImportTimeline devices={devices} />
                 </div>
             </div>
 
-            <StorageChart devices={devices} className="w-full" />
+            {/* Row 3 — Distribution + Activity */}
+            <div className="grid gap-4 lg:grid-cols-3">
+                <DeviceOSChart devices={devices} />
+                <HardwareOverview devices={devices} />
+                <RecentActivity devices={devices} />
+            </div>
         </div>
     )
 }

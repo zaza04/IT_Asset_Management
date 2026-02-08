@@ -60,6 +60,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Device, DeviceStatus, DEVICE_STATUS_CONFIG } from '@/types/device';
 import { useDeviceStore } from '@/stores/useDeviceStore';
+import { SoftLabel } from '@/components/ui/soft-label';
 
 interface DeviceListProps {
     devices: Device[];
@@ -83,13 +84,19 @@ function timeAgo(dateStr: string): string {
     return new Date(dateStr).toLocaleDateString('vi-VN');
 }
 
-function StatusBadge({ status }: { status: DeviceStatus }) {
+// Dot colors cho status dropdown items
+const STATUS_DOT_COLORS: Record<DeviceStatus, string> = {
+    active: 'bg-emerald-500',
+    broken: 'bg-red-500',
+    inactive: 'bg-gray-400',
+};
+
+function StatusLabel({ status }: { status: DeviceStatus }) {
     const config = DEVICE_STATUS_CONFIG[status];
     return (
-        <Badge variant={config.variant} className="text-xs">
-            <span className={`mr-1.5 h-1.5 w-1.5 rounded-full ${config.color} inline-block`} />
+        <SoftLabel color={config.softColor} size="sm">
             {config.label}
-        </Badge>
+        </SoftLabel>
     );
 }
 
@@ -163,7 +170,7 @@ export function DeviceList({
             {
                 accessorKey: 'status',
                 header: 'Status',
-                cell: ({ row }) => <StatusBadge status={row.original.status ?? 'active'} />,
+                cell: ({ row }) => <StatusLabel status={row.original.status ?? 'active'} />,
             },
             {
                 accessorKey: 'deviceInfo.cpu',
@@ -337,7 +344,7 @@ export function DeviceList({
                             <SelectContent>
                                 {Object.entries(DEVICE_STATUS_CONFIG).map(([key, config]) => (
                                     <SelectItem key={key} value={key}>
-                                        <span className={`mr-1.5 h-2 w-2 rounded-full ${config.color} inline-block`} />
+                                        <span className={`mr-1.5 h-2 w-2 rounded-full ${STATUS_DOT_COLORS[key as DeviceStatus]} inline-block`} />
                                         {config.label}
                                     </SelectItem>
                                 ))}
