@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { temporal } from 'zundo';
-import { Device, DeviceStatus } from '@/types/device';
+import { Device, DeviceInfo, DeviceStatus } from '@/types/device';
 import { importExcelDevice, exportDeviceToExcel } from '@/lib/deviceUtils';
 import { indexedDBStorage } from '@/lib/indexeddb-storage';
 import { toast } from 'sonner';
@@ -35,6 +35,19 @@ interface DeviceState {
     // Inline editing
     updateSheetCell: (deviceId: string, sheetName: string, rowIndex: number, column: string, value: any) => void;
     exportDevice: (device: Device) => void;
+    // CRUD — Create & Edit
+    createDevice: (info: Partial<DeviceInfo>) => Device;
+    updateDeviceInfo: (deviceId: string, updates: Partial<DeviceInfo>) => void;
+    duplicateDevice: (deviceId: string) => void;
+    // Sheet management
+    addSheet: (deviceId: string, sheetName: string) => void;
+    removeSheet: (deviceId: string, sheetName: string) => void;
+    renameSheet: (deviceId: string, oldName: string, newName: string) => void;
+    // Row & Column management
+    addSheetRow: (deviceId: string, sheetName: string, row?: Record<string, any>) => void;
+    removeSheetRows: (deviceId: string, sheetName: string, rowIndices: number[]) => void;
+    addSheetColumn: (deviceId: string, sheetName: string, columnName: string) => void;
+    reorderSheets: (deviceId: string, orderedKeys: string[]) => void;
 }
 
 const INITIAL_PROGRESS: ImportProgress = {
@@ -218,6 +231,165 @@ export const useDeviceStore = create<DeviceState>()(
                 } catch {
                     toast.error('Export failed');
                 }
+            },
+
+            // ===== CRUD: Create & Edit =====
+
+            createDevice: (info: Partial<DeviceInfo>) => {
+                const name = info.name?.trim() || 'New Device';
+                const device: Device = {
+                    id: `device_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                    status: 'active',
+                    deviceInfo: {
+                        name,
+                        os: info.os || '', cpu: info.cpu || '', ram: info.ram || '',
+                        architecture: info.architecture || '', ip: info.ip || '', mac: info.mac || '',
+                        lastUpdate: new Date().toLocaleString('vi-VN'),
+                    },
+                    fileName: '—',
+                    sheets: {},
+                    metadata: {
+                        totalSheets: 0, totalRows: 0, fileSize: '—',
+                        importedAt: new Date().toISOString(), tags: [],
+                    },
+                };
+                set((state) => ({ devices: [...state.devices, device] }));
+                toast.success(`Created ${name}`);
+                return device;
+            },
+
+            updateDeviceInfo: (deviceId: string, updates: Partial<DeviceInfo>) => {
+                set((state) => ({
+                    devices: state.devices.map((d) =>
+                        d.id === deviceId
+                            ? { ...d, deviceInfo: { ...d.deviceInfo, ...updates } }
+                            : d
+                    ),
+                }));
+                toast.success('Saved', { duration: 1500 });
+            },
+
+            duplicateDevice: (deviceId: string) => {
+                const source = get().devices.find((d) => d.id === deviceId);
+                if (!source) return;
+                const clone: Device = {
+                    ...structuredClone(source),
+                    id: `device_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                    deviceInfo: { ...source.deviceInfo, name: `${source.deviceInfo.name} (copy)` },
+                    metadata: { ...source.metadata, importedAt: new Date().toISOString() },
+                };
+                set((state) => ({ devices: [...state.devices, clone] }));
+                toast.success(`Duplicated ${source.deviceInfo.name}`);
+            },
+
+            // ===== Sheet Management =====
+
+            addSheet: (deviceId: string, sheetName: string) => {
+                const normalized = sheetName.trim().toLowerCase().replace(/\s+/g, '_');
+                if (!normalized) return;
+                set((state) => ({
+                    devices: state.devices.map((d) => {
+                        if (d.id !== deviceId || d.sheets[normalized]) return d;
+                        const sheets = { ...d.sheets, [normalized]: [] };
+                        return {
+                            ...d, sheets,
+                            metadata: { ...d.metadata, totalSheets: Object.keys(sheets).length },
+                        };
+                    }),
+                }));
+            },
+
+            removeSheet: (deviceId: string, sheetName: string) => {
+                set((state) => ({
+                    devices: state.devices.map((d) => {
+                        if (d.id !== deviceId) return d;
+                        if (Object.keys(d.sheets).length <= 1) return d;
+                        const { [sheetName]: _, ...rest } = d.sheets;
+                        const totalRows = Object.values(rest).reduce((sum, s) => sum + s.length, 0);
+                        return {
+                            ...d, sheets: rest,
+                            metadata: { ...d.metadata, totalSheets: Object.keys(rest).length, totalRows },
+                        };
+                    }),
+                }));
+            },
+
+            renameSheet: (deviceId: string, oldName: string, newName: string) => {
+                const normalized = newName.trim().toLowerCase().replace(/\s+/g, '_');
+                if (!normalized || normalized === oldName) return;
+                set((state) => ({
+                    devices: state.devices.map((d) => {
+                        if (d.id !== deviceId || !d.sheets[oldName] || d.sheets[normalized]) return d;
+                        const { [oldName]: data, ...rest } = d.sheets;
+                        return { ...d, sheets: { ...rest, [normalized]: data } };
+                    }),
+                }));
+            },
+
+            // ===== Row & Column Management =====
+
+            addSheetRow: (deviceId: string, sheetName: string, row?: Record<string, any>) => {
+                set((state) => ({
+                    devices: state.devices.map((d) => {
+                        if (d.id !== deviceId || !d.sheets[sheetName]) return d;
+                        const existing = d.sheets[sheetName];
+                        // Row trống dựa trên headers hiện tại
+                        const emptyRow = row ?? Object.fromEntries(
+                            Object.keys(existing[0] || {}).map((k) => [k, ''])
+                        );
+                        const updated = [...existing, emptyRow];
+                        return {
+                            ...d,
+                            sheets: { ...d.sheets, [sheetName]: updated },
+                            metadata: { ...d.metadata, totalRows: d.metadata.totalRows + 1 },
+                        };
+                    }),
+                }));
+            },
+
+            removeSheetRows: (deviceId: string, sheetName: string, rowIndices: number[]) => {
+                if (!rowIndices.length) return;
+                const indexSet = new Set(rowIndices);
+                set((state) => ({
+                    devices: state.devices.map((d) => {
+                        if (d.id !== deviceId || !d.sheets[sheetName]) return d;
+                        const filtered = d.sheets[sheetName].filter((_, i) => !indexSet.has(i));
+                        return {
+                            ...d,
+                            sheets: { ...d.sheets, [sheetName]: filtered },
+                            metadata: { ...d.metadata, totalRows: d.metadata.totalRows - rowIndices.length },
+                        };
+                    }),
+                }));
+                toast.success(`Deleted ${rowIndices.length} row(s)`, { duration: 1500 });
+            },
+
+            addSheetColumn: (deviceId: string, sheetName: string, columnName: string) => {
+                const trimmed = columnName.trim();
+                if (!trimmed) return;
+                set((state) => ({
+                    devices: state.devices.map((d) => {
+                        if (d.id !== deviceId || !d.sheets[sheetName]) return d;
+                        const updated = d.sheets[sheetName].map((row) => ({
+                            ...row, [trimmed]: '',
+                        }));
+                        return { ...d, sheets: { ...d.sheets, [sheetName]: updated } };
+                    }),
+                }));
+            },
+
+            // Sắp xếp lại thứ tự sheets theo danh sách keys mới
+            reorderSheets: (deviceId: string, orderedKeys: string[]) => {
+                set((state) => ({
+                    devices: state.devices.map((d) => {
+                        if (d.id !== deviceId) return d;
+                        const reordered: Record<string, any[]> = {};
+                        orderedKeys.forEach((key) => {
+                            if (d.sheets[key]) reordered[key] = d.sheets[key];
+                        });
+                        return { ...d, sheets: reordered };
+                    }),
+                }));
             },
         }),
         {

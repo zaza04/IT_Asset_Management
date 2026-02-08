@@ -1,7 +1,6 @@
 import {
     Dialog,
     DialogContent,
-    DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
 import {
@@ -19,6 +18,7 @@ import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuCheckboxItem,
+    DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
@@ -26,7 +26,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 import {
     Select,
     SelectContent,
@@ -34,13 +34,23 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Download, Trash2, Calendar, HardDrive, Cpu, Network, Laptop, Search, SlidersHorizontal, Tag, X, Plus } from 'lucide-react';
-import { Device, DeviceStatus, DEVICE_STATUS_CONFIG, SHEET_NAMES } from '@/types/device';
+import { Download, Trash2, Calendar, HardDrive, Cpu, Network, Laptop, Search, SlidersHorizontal, Monitor, Pencil, Check, X, Plus, Copy, GripVertical, Eye } from 'lucide-react';
+import { Device, DeviceInfo, DeviceStatus, DEVICE_STATUS_CONFIG, SHEET_NAMES } from '@/types/device';
 import { SheetTable } from './SheetTable';
 import { Input } from '@/components/ui/input';
-import { useState, useMemo } from 'react';
+import { Label } from '@/components/ui/label';
+import { useState, useCallback, useEffect } from 'react';
 import { useDeviceStore } from '@/stores/useDeviceStore';
-import { SoftLabel } from '@/components/ui/soft-label';
+import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
+import {
+    DndContext, closestCenter, KeyboardSensor,
+    PointerSensor, useSensor, useSensors, type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+    arrayMove, SortableContext, useSortable,
+    horizontalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 // Dot colors cho status selector
 const STATUS_DOT_COLORS: Record<DeviceStatus, string> = {
@@ -52,6 +62,7 @@ const STATUS_DOT_COLORS: Record<DeviceStatus, string> = {
 interface DeviceDetailProps {
     device: Device | null;
     isOpen: boolean;
+    mode?: 'view' | 'edit';
     onClose: () => void;
     onExport: (device: Device) => void;
     onDelete: (deviceId: string) => void;
@@ -67,23 +78,78 @@ const getDisplayName = (sheetKey: string): string => {
 export function DeviceDetail({
     device,
     isOpen,
+    mode: initialMode = 'view',
     onClose,
     onExport,
     onDelete,
 }: DeviceDetailProps) {
+    const [currentMode, setCurrentMode] = useState<'view' | 'edit'>(initialMode);
+    const isEditMode = currentMode === 'edit';
     const [searchTerm, setSearchTerm] = useState('');
-    const [newTag, setNewTag] = useState('');
+    const [isEditing, setIsEditing] = useState(false);
+    const [editForm, setEditForm] = useState<Partial<DeviceInfo>>({});
+    const [newSheetName, setNewSheetName] = useState('');
+    const [isAddingSheet, setIsAddingSheet] = useState(false);
+    const [newColumnName, setNewColumnName] = useState('');
+    const [addingColumnSheet, setAddingColumnSheet] = useState<string | null>(null);
     const updateDeviceVisibleSheets = useDeviceStore((s) => s.updateDeviceVisibleSheets);
     const setDeviceStatus = useDeviceStore((s) => s.setDeviceStatus);
-    const addTag = useDeviceStore((s) => s.addTag);
-    const removeTag = useDeviceStore((s) => s.removeTag);
     const updateSheetCell = useDeviceStore((s) => s.updateSheetCell);
+    const updateDeviceInfo = useDeviceStore((s) => s.updateDeviceInfo);
+    const duplicateDevice = useDeviceStore((s) => s.duplicateDevice);
+    const addSheet = useDeviceStore((s) => s.addSheet);
+    const removeSheet = useDeviceStore((s) => s.removeSheet);
+    const renameSheet = useDeviceStore((s) => s.renameSheet);
+    const addSheetRow = useDeviceStore((s) => s.addSheetRow);
+    const removeSheetRows = useDeviceStore((s) => s.removeSheetRows);
+    const addSheetColumn = useDeviceStore((s) => s.addSheetColumn);
+    const reorderSheets = useDeviceStore((s) => s.reorderSheets);
+
+    // Đồng bộ mode khi mở modal hoặc đổi initialMode
+    useEffect(() => {
+        setCurrentMode(initialMode);
+        setIsEditing(false);
+        setEditForm({});
+    }, [initialMode, isOpen]);
+
+    // DnD sensors — chỉ bắt đầu drag sau 5px di chuyển
+    const sensors = useSensors(
+        useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    );
+
+    // Edit mode handlers
+    const startEditing = useCallback(() => {
+        if (!device) return;
+        setEditForm({ ...device.deviceInfo });
+        setIsEditing(true);
+    }, [device]);
+
+    const saveEditing = useCallback(() => {
+        if (!device) return;
+        updateDeviceInfo(device.id, editForm);
+        setIsEditing(false);
+    }, [device, editForm, updateDeviceInfo]);
+
+    const cancelEditing = useCallback(() => {
+        setIsEditing(false);
+        setEditForm({});
+    }, []);
+
+    // Kéo thả sắp xếp tabs
+    const handleDragEnd = useCallback((event: DragEndEvent) => {
+        if (!device) return;
+        const { active, over } = event;
+        if (!over || active.id === over.id) return;
+        const keys = Object.keys(device.sheets);
+        const oldIndex = keys.indexOf(active.id as string);
+        const newIndex = keys.indexOf(over.id as string);
+        if (oldIndex === -1 || newIndex === -1) return;
+        reorderSheets(device.id, arrayMove(keys, oldIndex, newIndex));
+    }, [device, reorderSheets]);
 
     if (!device) return null;
 
-    // Sheets hiện tại của device (tất cả sheet đã lưu)
     const allSheetKeys = Object.keys(device.sheets);
-    // Sheets được hiển thị (per-device override hoặc tất cả)
     const visibleSheets = device.metadata.visibleSheets ?? allSheetKeys;
     const displayedSheets = allSheetKeys.filter((s) => visibleSheets.includes(s));
 
@@ -92,186 +158,290 @@ export function DeviceDetail({
         const updated = current.includes(sheet)
             ? current.filter((s) => s !== sheet)
             : [...current, sheet];
-        // Không cho ẩn hết
         if (updated.length === 0) return;
         updateDeviceVisibleSheets(device.id, updated);
     };
 
+    const status = device.status ?? 'active';
+    const statusConfig = DEVICE_STATUS_CONFIG[status];
+
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[90vw] w-full h-[90vh] flex flex-col p-0 gap-0 overflow-hidden">
-                {/* Header Section */}
-                <div className="p-6 border-b bg-muted/10">
-                    <DialogHeader className="p-0 space-y-0">
-                        <div className="flex items-start justify-between gap-4">
-                            <div className="space-y-3">
-                                <div className="flex items-center gap-3">
-                                    <DialogTitle className="text-2xl font-bold">
+            <DialogContent className="sm:max-w-[90vw] w-full h-[90vh] flex flex-row p-0 gap-0 overflow-hidden">
+                {/* Accessible title — ẩn cho screen reader */}
+                <VisuallyHidden.Root>
+                    <DialogTitle>{device.deviceInfo.name}</DialogTitle>
+                </VisuallyHidden.Root>
+
+                {/* Toggle View ↔ Edit — góc trên trái */}
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-2 left-2 z-20 h-8 w-8"
+                    onClick={() => {
+                        setCurrentMode((m) => m === 'view' ? 'edit' : 'view');
+                        if (isEditing) cancelEditing();
+                    }}
+                    title={isEditMode ? 'Chuyển sang View' : 'Chuyển sang Edit'}
+                >
+                    {isEditMode ? <Eye className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
+                </Button>
+
+                {/* ===== SIDEBAR ===== */}
+                <div className="w-[300px] flex-shrink-0 border-r flex flex-col bg-muted/5 overflow-y-auto pt-10">
+                    <div className="p-5 space-y-5">
+                        {/* Device name + status */}
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-2.5">
+                                <div className="rounded-lg bg-primary/10 p-2 flex-shrink-0">
+                                    <Monitor className="h-5 w-5 text-primary" />
+                                </div>
+                                {isEditing ? (
+                                    <Input
+                                        value={editForm.name ?? ''}
+                                        onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))}
+                                        className="text-base font-bold h-8"
+                                    />
+                                ) : (
+                                    <h2 className="text-base font-bold leading-snug break-words">
                                         {device.deviceInfo.name}
-                                    </DialogTitle>
-                                    <Badge variant="secondary" className="px-2.5 py-0.5 text-sm font-medium">
-                                        {device.deviceInfo.os}
-                                    </Badge>
-                                    {/* Status selector */}
-                                    <Select
-                                        value={device.status ?? 'active'}
-                                        onValueChange={(val) => setDeviceStatus(device.id, val as DeviceStatus)}
-                                    >
-                                        <SelectTrigger className="w-[160px] h-8 text-xs">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {Object.entries(DEVICE_STATUS_CONFIG).map(([key, config]) => (
-                                                <SelectItem key={key} value={key}>
-                                                    <span className={`mr-1.5 h-2 w-2 rounded-full ${STATUS_DOT_COLORS[key as DeviceStatus]} inline-block`} />
-                                                    {config.label}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
-                                {/* Tags editor */}
-                                <div className="flex items-center gap-2 flex-wrap">
-                                    <Tag className="h-3.5 w-3.5 text-muted-foreground" />
-                                    {(device.metadata.tags ?? []).map((tag) => (
-                                        <Badge key={tag} variant="outline" className="text-xs gap-1 pr-1">
-                                            {tag}
-                                            <button
-                                                onClick={() => removeTag(device.id, tag)}
-                                                className="ml-0.5 hover:text-destructive"
-                                            >
-                                                <X className="h-3 w-3" />
-                                            </button>
-                                        </Badge>
-                                    ))}
-                                    <form
-                                        className="flex items-center gap-1"
-                                        onSubmit={(e) => {
-                                            e.preventDefault();
-                                            if (newTag.trim()) {
-                                                addTag(device.id, newTag);
-                                                setNewTag('');
-                                            }
-                                        }}
-                                    >
-                                        <Input
-                                            value={newTag}
-                                            onChange={(e) => setNewTag(e.target.value)}
-                                            placeholder="Add tag..."
-                                            className="h-6 w-24 text-xs px-2"
-                                        />
-                                        <Button type="submit" variant="ghost" size="icon" className="h-6 w-6">
-                                            <Plus className="h-3 w-3" />
-                                        </Button>
-                                    </form>
-                                </div>
-                                <div className="flex items-center gap-6 text-sm text-muted-foreground">
-
-                                    <div className="flex items-center gap-2">
-                                        <Calendar className="h-4 w-4" />
-                                        <span>Updated {device.deviceInfo.lastUpdate}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <DatabaseIcon className="h-4 w-4" />
-                                        <span>{device.metadata.fileSize}</span>
-                                    </div>
-                                </div>
+                                    </h2>
+                                )}
                             </div>
+                            {/* Status — selector khi Edit, label khi View */}
+                            {isEditMode ? (
+                                <Select
+                                    value={status}
+                                    onValueChange={(val) => setDeviceStatus(device.id, val as DeviceStatus)}
+                                >
+                                    <SelectTrigger className="w-full h-8 text-xs">
+                                        <SelectValue>
+                                            <span className="flex items-center gap-2">
+                                                <span className={`h-2 w-2 rounded-full ${STATUS_DOT_COLORS[status]}`} />
+                                                {statusConfig.label}
+                                            </span>
+                                        </SelectValue>
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {Object.entries(DEVICE_STATUS_CONFIG).map(([key, config]) => (
+                                            <SelectItem key={key} value={key}>
+                                                <span className={`mr-1.5 h-2 w-2 rounded-full ${STATUS_DOT_COLORS[key as DeviceStatus]} inline-block`} />
+                                                {config.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            ) : (
+                                <div className="flex items-center gap-2 px-1">
+                                    <span className={`h-2 w-2 rounded-full ${STATUS_DOT_COLORS[status]}`} />
+                                    <span className="text-xs font-medium">{statusConfig.label}</span>
+                                </div>
+                            )}
+                        </div>
 
-                            <div className="flex items-center gap-2 pr-8">
-                                <Button variant="outline" onClick={() => onExport(device)}>
-                                    <Download className="mr-2 h-4 w-4" />
-                                    Export
-                                </Button>
+                        <Separator />
 
-                                <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                        <Button variant="destructive">
-                                            <Trash2 className="mr-2 h-4 w-4" />
-                                            Delete
+                        {/* Thông tin thiết bị — view / edit mode */}
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Thông tin</p>
+                                {isEditMode && (
+                                    isEditing ? (
+                                        <div className="flex gap-1">
+                                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={saveEditing}>
+                                                <Check className="h-3.5 w-3.5 text-emerald-500" />
+                                            </Button>
+                                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={cancelEditing}>
+                                                <X className="h-3.5 w-3.5 text-muted-foreground" />
+                                            </Button>
+                                        </div>
+                                    ) : (
+                                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={startEditing}>
+                                            <Pencil className="h-3 w-3 text-muted-foreground" />
                                         </Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                            <AlertDialogDescription>
-                                                This action cannot be undone. This will permanently delete the device
-                                                and remove its data from our servers.
-                                            </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                            <AlertDialogAction
-                                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                                onClick={() => {
-                                                    onDelete(device.id);
-                                                    onClose();
-                                                }}
-                                            >
-                                                Delete
-                                            </AlertDialogAction>
-                                        </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
+                                    )
+                                )}
+                            </div>
+                            {isEditing ? (
+                                <div className="space-y-2.5">
+                                    <EditField icon={<Laptop className="h-3.5 w-3.5" />} label="OS" value={editForm.os ?? ''} onChange={(v) => setEditForm((f) => ({ ...f, os: v }))} />
+                                    <EditField icon={<Cpu className="h-3.5 w-3.5" />} label="CPU" value={editForm.cpu ?? ''} onChange={(v) => setEditForm((f) => ({ ...f, cpu: v }))} />
+                                    <EditField icon={<HardDrive className="h-3.5 w-3.5" />} label="RAM" value={editForm.ram ?? ''} onChange={(v) => setEditForm((f) => ({ ...f, ram: v }))} />
+                                    <EditField icon={<Monitor className="h-3.5 w-3.5" />} label="Arch" value={editForm.architecture ?? ''} onChange={(v) => setEditForm((f) => ({ ...f, architecture: v }))} />
+                                    <EditField icon={<Network className="h-3.5 w-3.5" />} label="MAC" value={editForm.mac ?? ''} onChange={(v) => setEditForm((f) => ({ ...f, mac: v }))} />
+                                </div>
+                            ) : (
+                                <>
+                                    <InfoRow icon={<Laptop className="h-3.5 w-3.5" />} label="OS" value={device.deviceInfo.os} />
+                                    <InfoRow icon={<Cpu className="h-3.5 w-3.5" />} label="CPU" value={device.deviceInfo.cpu} />
+                                    <InfoRow icon={<HardDrive className="h-3.5 w-3.5" />} label="RAM" value={device.deviceInfo.ram} />
+                                    <InfoRow icon={<Monitor className="h-3.5 w-3.5" />} label="Arch" value={device.deviceInfo.architecture} />
+                                    <InfoRow icon={<Network className="h-3.5 w-3.5" />} label="MAC" value={device.deviceInfo.mac || 'N/A'} />
+                                </>
+                            )}
+                        </div>
+
+                        <Separator />
+
+                        {/* Metadata */}
+                        <div className="space-y-2">
+                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Chi tiết</p>
+                            <div className="space-y-1.5 text-sm">
+                                <div className="flex items-center gap-2 text-muted-foreground">
+                                    <Calendar className="h-3.5 w-3.5" />
+                                    <span className="text-xs">{device.deviceInfo.lastUpdate}</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-muted-foreground">
+                                    <DatabaseIcon className="h-3.5 w-3.5" />
+                                    <span className="text-xs">{device.metadata.fileSize}</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-muted-foreground">
+                                    <SlidersHorizontal className="h-3.5 w-3.5" />
+                                    <span className="text-xs">{device.metadata.totalSheets} sheets • {device.metadata.totalRows} rows</span>
+                                </div>
                             </div>
                         </div>
-                    </DialogHeader>
 
-                    {/* Quick Stats Grid */}
-                    <div className="grid grid-cols-4 gap-4 mt-6">
-                        <StatCard
-                            icon={<Cpu className="h-4 w-4 text-primary" />}
-                            label="Processor"
-                            value={device.deviceInfo.cpu}
-                        />
-                        <StatCard
-                            icon={<HardDrive className="h-4 w-4 text-primary" />}
-                            label="Memory"
-                            value={device.deviceInfo.ram}
-                        />
-                        <StatCard
-                            icon={<Laptop className="h-4 w-4 text-primary" />}
-                            label="Architecture"
-                            value={device.deviceInfo.architecture}
-                        />
-                        <StatCard
-                            icon={<Network className="h-4 w-4 text-primary" />}
-                            label="MAC Address"
-                            value={device.deviceInfo.mac || 'N/A'}
-                        />
+                        <Separator />
+
+                        {/* Actions — Export, Duplicate, Delete */}
+                        <div className="space-y-2">
+                            <div className={`grid gap-2 ${isEditMode ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                                <Button variant="outline" size="sm" className="w-full" onClick={() => onExport(device)}>
+                                    <Download className="mr-1.5 h-3.5 w-3.5" />
+                                    Export
+                                </Button>
+                                {isEditMode && (
+                                    <Button variant="outline" size="sm" className="w-full" onClick={() => duplicateDevice(device.id)}>
+                                        <Copy className="mr-1.5 h-3.5 w-3.5" />
+                                        Duplicate
+                                    </Button>
+                                )}
+                            </div>
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="outline" size="sm" className="w-full text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30">
+                                        <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+                                        Delete
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Xác nhận xóa?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            Thiết bị sẽ bị xóa vĩnh viễn. Bạn có thể dùng Undo (Ctrl+Z) để khôi phục.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Hủy</AlertDialogCancel>
+                                        <AlertDialogAction
+                                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                            onClick={() => {
+                                                onDelete(device.id);
+                                                onClose();
+                                            }}
+                                        >
+                                            Xóa
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        </div>
                     </div>
                 </div>
 
-                {/* Tabs & Content Section */}
-                <div className="flex-1 flex flex-col min-h-0 bg-background">
-                    <Tabs defaultValue={displayedSheets[0]} className="flex-1 flex flex-col">
-                        <div className="flex items-center justify-between px-6 py-2 border-b">
-                            <TabsList className="h-auto bg-transparent p-0 gap-2">
-                                <ScrollArea orientation="horizontal" className="w-[550px] whitespace-nowrap">
-                                    <div className="flex gap-2 pb-3">
+                {/* ===== CONTENT ===== */}
+                <div className="flex-1 flex flex-col min-h-0 min-w-0 bg-background py-10">
+                    <Tabs defaultValue={displayedSheets[0] || '_empty'} className="flex-1 flex flex-col">
+                        {/* Tab bar + controls */}
+                        <div className="flex items-center gap-3 px-5 py-2.5 border-b pr-14">
+                            {/* Tabs — View: click bình thường, Edit: sortable + context menu */}
+                            <div className="relative min-w-0 flex-shrink">
+                                {isEditMode ? (
+                                    /* Edit mode — drag & drop, context menu */
+                                    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                                        <SortableContext items={displayedSheets} strategy={horizontalListSortingStrategy}>
+                                            <TabsList className="h-auto bg-transparent p-0 gap-1.5 overflow-x-auto scrollbar-none flex">
+                                                {displayedSheets.map((sheetName) => (
+                                                    <SortableTab
+                                                        key={sheetName}
+                                                        id={sheetName}
+                                                        label={getDisplayName(sheetName)}
+                                                        count={device.sheets[sheetName]?.length ?? 0}
+                                                        onRename={() => {
+                                                            const newName = prompt('Rename sheet:', sheetName);
+                                                            if (newName) renameSheet(device.id, sheetName, newName);
+                                                        }}
+                                                        onDelete={allSheetKeys.length > 1 ? () => {
+                                                            if (confirm(`Xóa sheet "${getDisplayName(sheetName)}"?`)) {
+                                                                removeSheet(device.id, sheetName);
+                                                            }
+                                                        } : undefined}
+                                                    />
+                                                ))}
+                                                {/* Nút thêm sheet mới */}
+                                                {isAddingSheet ? (
+                                                    <form
+                                                        className="flex items-center gap-1"
+                                                        onSubmit={(e) => {
+                                                            e.preventDefault();
+                                                            if (newSheetName.trim()) {
+                                                                addSheet(device.id, newSheetName);
+                                                                setNewSheetName('');
+                                                            }
+                                                            setIsAddingSheet(false);
+                                                        }}
+                                                    >
+                                                        <Input
+                                                            value={newSheetName}
+                                                            onChange={(e) => setNewSheetName(e.target.value)}
+                                                            placeholder="Sheet name..."
+                                                            className="h-7 w-28 text-xs"
+                                                            autoFocus
+                                                            onBlur={() => setIsAddingSheet(false)}
+                                                        />
+                                                    </form>
+                                                ) : (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8 rounded-full flex-shrink-0"
+                                                        onClick={() => setIsAddingSheet(true)}
+                                                    >
+                                                        <Plus className="h-3.5 w-3.5" />
+                                                    </Button>
+                                                )}
+                                            </TabsList>
+                                        </SortableContext>
+                                    </DndContext>
+                                ) : (
+                                    /* View mode — tab click bình thường, không drag, không context menu */
+                                    <TabsList className="h-auto bg-transparent p-0 gap-1.5 overflow-x-auto scrollbar-none flex">
                                         {displayedSheets.map((sheetName) => (
                                             <TabsTrigger
                                                 key={sheetName}
                                                 value={sheetName}
-                                                className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-full px-4 h-8 border border-transparent data-[state=active]:border-primary/20 capitalize"
+                                                className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-full px-3.5 h-8 border border-transparent data-[state=active]:border-primary/20 capitalize whitespace-nowrap flex-shrink-0"
                                             >
                                                 {getDisplayName(sheetName)}
-                                                <span className="ml-2 text-xs opacity-60">
-                                                    {device.sheets[sheetName].length}
-                                                </span>
+                                                <span className="ml-1.5 text-xs opacity-60">{device.sheets[sheetName]?.length ?? 0}</span>
                                             </TabsTrigger>
                                         ))}
-                                    </div>
-                                </ScrollArea>
-                            </TabsList>
+                                    </TabsList>
+                                )}
+                                {/* Fade gradient bên phải */}
+                                <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none" />
+                            </div>
 
-                            <div className="flex items-center gap-2">
-                                {/* Toggle sheet visibility */}
+                            {/* Spacer */}
+                            <div className="flex-1" />
+
+                            {/* Controls — Sheets dropdown + Filter */}
+                            <div className="flex items-center gap-2 flex-shrink-0">
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Button variant="outline" size="sm" className="h-9">
-                                            <SlidersHorizontal className="mr-2 h-4 w-4" />
+                                        <Button variant="outline" size="sm" className="h-8">
+                                            <SlidersHorizontal className="mr-2 h-3.5 w-3.5" />
                                             Sheets
                                             <Badge variant="secondary" className="ml-2 px-1.5 text-xs">
                                                 {displayedSheets.length}/{allSheetKeys.length}
@@ -293,12 +463,11 @@ export function DeviceDetail({
                                     </DropdownMenuContent>
                                 </DropdownMenu>
 
-                                {/* Search within tab */}
-                                <div className="relative w-52">
-                                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                                <div className="relative w-44">
+                                    <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
                                     <Input
-                                        placeholder="Filter current view..."
-                                        className="pl-8 h-9"
+                                        placeholder="Filter..."
+                                        className="pl-7 h-8 text-sm"
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
                                     />
@@ -306,42 +475,206 @@ export function DeviceDetail({
                             </div>
                         </div>
 
-                        {displayedSheets.map((sheetName) => (
-                            <TabsContent key={sheetName} value={sheetName} className="flex-1 p-0 m-0 min-h-0 data-[state=active]:flex flex-col relative">
-                                <div className="absolute inset-0 p-6">
-                                    <div className="h-full w-full rounded-md border bg-card shadow-sm overflow-hidden">
-                                        <SheetTable
-                                            data={device.sheets[sheetName].filter(item =>
-                                                JSON.stringify(item).toLowerCase().includes(searchTerm.toLowerCase())
-                                            )}
-                                            sheetName={sheetName}
-                                            deviceId={device.id}
-                                            onCellUpdate={(rowIndex, column, value) =>
-                                                updateSheetCell(device.id, sheetName, rowIndex, column, value)
-                                            }
-                                        />
-                                    </div>
+                        {/* Sheet content — hoặc empty state */}
+                        {displayedSheets.length === 0 ? (
+                            <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
+                                <div className="rounded-full bg-muted p-4 mb-4">
+                                    <Plus className="h-6 w-6 text-muted-foreground" />
                                 </div>
-                            </TabsContent>
-                        ))}
+                                <p className="text-sm font-medium mb-1">Chưa có sheet nào</p>
+                                <p className="text-xs text-muted-foreground mb-3">
+                                    {isEditMode ? 'Thêm sheet đầu tiên để bắt đầu nhập dữ liệu' : 'Thiết bị chưa có dữ liệu sheet'}
+                                </p>
+                                {isEditMode && (
+                                    <Button size="sm" onClick={() => setIsAddingSheet(true)}>
+                                        <Plus className="mr-1.5 h-3.5 w-3.5" />
+                                        Thêm sheet
+                                    </Button>
+                                )}
+                            </div>
+                        ) : (
+                            displayedSheets.map((sheetName) => (
+                                <TabsContent key={sheetName} value={sheetName} className="flex-1 p-0 m-0 min-h-0 data-[state=active]:flex flex-col relative">
+                                    <div className="absolute inset-0 p-4 flex flex-col">
+                                        <div className="flex-1 rounded-md border bg-card shadow-sm overflow-hidden">
+                                            {device.sheets[sheetName]?.length > 0 ? (
+                                                <SheetTable
+                                                    data={device.sheets[sheetName].filter(item =>
+                                                        JSON.stringify(item).toLowerCase().includes(searchTerm.toLowerCase())
+                                                    )}
+                                                    sheetName={sheetName}
+                                                    deviceId={device.id}
+                                                    readOnly={!isEditMode}
+                                                    onCellUpdate={(rowIndex, column, value) =>
+                                                        updateSheetCell(device.id, sheetName, rowIndex, column, value)
+                                                    }
+                                                />
+                                            ) : (
+                                                <div className="h-full flex flex-col items-center justify-center text-center p-6">
+                                                    <p className="text-sm text-muted-foreground mb-3">
+                                                        {isEditMode ? 'Sheet trống — thêm columns trước' : 'Sheet trống'}
+                                                    </p>
+                                                    {isEditMode && (
+                                                        addingColumnSheet === sheetName ? (
+                                                            <form
+                                                                className="flex items-center gap-2"
+                                                                onSubmit={(e) => {
+                                                                    e.preventDefault();
+                                                                    if (newColumnName.trim()) {
+                                                                        addSheetColumn(device.id, sheetName, newColumnName);
+                                                                        addSheetRow(device.id, sheetName);
+                                                                        setNewColumnName('');
+                                                                    }
+                                                                    setAddingColumnSheet(null);
+                                                                }}
+                                                            >
+                                                                <Input
+                                                                    value={newColumnName}
+                                                                    onChange={(e) => setNewColumnName(e.target.value)}
+                                                                    placeholder="Column name..."
+                                                                    className="h-8 w-40 text-sm"
+                                                                    autoFocus
+                                                                />
+                                                                <Button type="submit" size="sm">Add</Button>
+                                                            </form>
+                                                        ) : (
+                                                            <Button size="sm" variant="outline" onClick={() => setAddingColumnSheet(sheetName)}>
+                                                                <Plus className="mr-1.5 h-3.5 w-3.5" />
+                                                                Thêm column
+                                                            </Button>
+                                                        )
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                        {/* Action bar dưới table — chỉ hiện ở Edit mode */}
+                                        {isEditMode && device.sheets[sheetName]?.length > 0 && (
+                                            <div className="flex items-center gap-2 pt-2">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="h-7 text-xs"
+                                                    onClick={() => addSheetRow(device.id, sheetName)}
+                                                >
+                                                    <Plus className="mr-1 h-3 w-3" />
+                                                    Add Row
+                                                </Button>
+                                                {addingColumnSheet === sheetName ? (
+                                                    <form
+                                                        className="flex items-center gap-1"
+                                                        onSubmit={(e) => {
+                                                            e.preventDefault();
+                                                            if (newColumnName.trim()) {
+                                                                addSheetColumn(device.id, sheetName, newColumnName);
+                                                                setNewColumnName('');
+                                                            }
+                                                            setAddingColumnSheet(null);
+                                                        }}
+                                                    >
+                                                        <Input
+                                                            value={newColumnName}
+                                                            onChange={(e) => setNewColumnName(e.target.value)}
+                                                            placeholder="Column..."
+                                                            className="h-7 w-28 text-xs"
+                                                            autoFocus
+                                                            onBlur={() => setAddingColumnSheet(null)}
+                                                        />
+                                                    </form>
+                                                ) : (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-7 text-xs"
+                                                        onClick={() => setAddingColumnSheet(sheetName)}
+                                                    >
+                                                        <Plus className="mr-1 h-3 w-3" />
+                                                        Add Column
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                </TabsContent>
+                            ))
+                        )}
                     </Tabs>
                 </div>
-            </DialogContent >
-        </Dialog >
+            </DialogContent>
+        </Dialog>
     );
 }
 
-function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+// Row thông tin trong sidebar — label trên, value dưới
+function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
     return (
-        <div className="flex flex-col gap-1 p-3 rounded-lg border bg-background/50 backdrop-blur-sm">
-            <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                {icon}
-                <span className="text-xs font-medium uppercase tracking-wider">{label}</span>
-            </div>
-            <div className="font-semibold text-sm truncate" title={value}>
-                {value || 'N/A'}
+        <div className="flex items-start gap-2 py-1">
+            <span className="text-muted-foreground mt-0.5 flex-shrink-0">{icon}</span>
+            <div className="flex-1 min-w-0">
+                <p className="text-[11px] text-muted-foreground leading-none mb-1">{label}</p>
+                <p className="text-sm font-medium leading-snug break-words">{value || 'N/A'}</p>
             </div>
         </div>
+    );
+}
+
+// Edit mode — Input field trong sidebar
+function EditField({ icon, label, value, onChange }: {
+    icon: React.ReactNode; label: string; value: string; onChange: (v: string) => void;
+}) {
+    return (
+        <div className="flex items-center gap-2">
+            <span className="text-muted-foreground flex-shrink-0">{icon}</span>
+            <div className="flex-1 min-w-0">
+                <Label className="text-[11px] text-muted-foreground">{label}</Label>
+                <Input
+                    value={value}
+                    onChange={(e) => onChange(e.target.value)}
+                    className="h-7 text-sm mt-0.5"
+                />
+            </div>
+        </div>
+    );
+}
+
+// Sortable tab — kéo thả sắp xếp thứ tự sheet
+function SortableTab({ id, label, count, onRename, onDelete }: {
+    id: string; label: string; count: number;
+    onRename: () => void; onDelete?: () => void;
+}) {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+    };
+
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+                    <TabsTrigger
+                        value={id}
+                        className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-full px-3.5 h-8 border border-transparent data-[state=active]:border-primary/20 capitalize whitespace-nowrap flex-shrink-0 cursor-grab active:cursor-grabbing"
+                    >
+                        <GripVertical className="h-3 w-3 mr-1 opacity-40" />
+                        {label}
+                        <span className="ml-1.5 text-xs opacity-60">{count}</span>
+                    </TabsTrigger>
+                </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+                <DropdownMenuItem onClick={onRename}>
+                    <Pencil className="mr-2 h-3.5 w-3.5" />
+                    Rename
+                </DropdownMenuItem>
+                {onDelete && (
+                    <DropdownMenuItem onClick={onDelete} className="text-destructive focus:text-destructive">
+                        <Trash2 className="mr-2 h-3.5 w-3.5" />
+                        Delete
+                    </DropdownMenuItem>
+                )}
+            </DropdownMenuContent>
+        </DropdownMenu>
     );
 }
 

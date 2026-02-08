@@ -22,7 +22,6 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
     DropdownMenu,
@@ -44,9 +43,9 @@ import {
     Trash2,
     Search,
     ArrowUpDown,
-    Tag,
     Filter,
     CheckCircle2,
+    Pencil,
 } from 'lucide-react';
 import {
     AlertDialog,
@@ -65,6 +64,7 @@ import { SoftLabel } from '@/components/ui/soft-label';
 interface DeviceListProps {
     devices: Device[];
     onViewDevice: (device: Device) => void;
+    onUpdateDevice: (device: Device) => void;
     onExportDevice: (device: Device) => void;
     onDeleteDevice: (deviceId: string) => void;
 }
@@ -103,6 +103,7 @@ function StatusLabel({ status }: { status: DeviceStatus }) {
 export function DeviceList({
     devices,
     onViewDevice,
+    onUpdateDevice,
     onExportDevice,
     onDeleteDevice,
 }: DeviceListProps) {
@@ -159,41 +160,20 @@ export function DeviceList({
                     </Button>
                 ),
                 cell: ({ row }) => (
-                    <div>
-                        <p className="font-medium">{row.original.deviceInfo.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                            {row.original.deviceInfo.os} • {row.original.deviceInfo.ram}
-                        </p>
-                    </div>
+                    <p className="font-medium">{row.original.deviceInfo.name}</p>
+                ),
+            },
+            {
+                accessorKey: 'deviceInfo.os',
+                header: 'OS',
+                cell: ({ row }) => (
+                    <span className="text-sm">{row.original.deviceInfo.os}</span>
                 ),
             },
             {
                 accessorKey: 'status',
                 header: 'Status',
                 cell: ({ row }) => <StatusLabel status={row.original.status ?? 'active'} />,
-            },
-            {
-                accessorKey: 'deviceInfo.cpu',
-                header: 'CPU',
-                cell: ({ row }) => (
-                    <div className="max-w-[180px] truncate text-sm" title={row.original.deviceInfo.cpu}>
-                        {row.original.deviceInfo.cpu}
-                    </div>
-                ),
-            },
-            {
-                accessorKey: 'metadata.totalSheets',
-                header: 'Sheets',
-                cell: ({ row }) => (
-                    <Badge variant="secondary">{row.original.metadata.totalSheets}</Badge>
-                ),
-            },
-            {
-                accessorKey: 'metadata.fileSize',
-                header: 'Size',
-                cell: ({ row }) => (
-                    <span className="text-sm text-muted-foreground">{row.original.metadata.fileSize}</span>
-                ),
             },
             {
                 accessorKey: 'metadata.importedAt',
@@ -213,28 +193,6 @@ export function DeviceList({
                 ),
             },
             {
-                id: 'tags',
-                header: 'Tags',
-                cell: ({ row }) => {
-                    const tags = row.original.metadata.tags;
-                    if (!tags || tags.length === 0) return <span className="text-xs text-muted-foreground">—</span>;
-                    return (
-                        <div className="flex gap-1 flex-wrap max-w-[150px]">
-                            {tags.slice(0, 2).map((tag) => (
-                                <Badge key={tag} variant="outline" className="text-xs px-1.5">
-                                    {tag}
-                                </Badge>
-                            ))}
-                            {tags.length > 2 && (
-                                <Badge variant="outline" className="text-xs px-1.5">
-                                    +{tags.length - 2}
-                                </Badge>
-                            )}
-                        </div>
-                    );
-                },
-            },
-            {
                 id: 'actions',
                 header: '',
                 cell: ({ row }) => (
@@ -248,6 +206,10 @@ export function DeviceList({
                             <DropdownMenuItem onClick={() => onViewDevice(row.original)}>
                                 <Eye className="mr-2 h-4 w-4" />
                                 View Details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => onUpdateDevice(row.original)}>
+                                <Pencil className="mr-2 h-4 w-4" />
+                                Update
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => onExportDevice(row.original)}>
                                 <Download className="mr-2 h-4 w-4" />
@@ -265,7 +227,7 @@ export function DeviceList({
                 ),
             },
         ],
-        [onViewDevice, onExportDevice]
+        [onViewDevice, onUpdateDevice, onExportDevice]
     );
 
     const table = useReactTable({

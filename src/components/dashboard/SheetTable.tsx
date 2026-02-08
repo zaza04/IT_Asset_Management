@@ -11,6 +11,7 @@ interface SheetTableProps {
     data: any[];
     sheetName: string;
     deviceId?: string;
+    readOnly?: boolean;
     onCellUpdate?: (rowIndex: number, column: string, value: any) => void;
 }
 
@@ -20,7 +21,7 @@ interface EditingCell {
     column: string;
 }
 
-export function SheetTable({ data, sheetName, deviceId, onCellUpdate }: SheetTableProps) {
+export function SheetTable({ data, sheetName, deviceId, readOnly, onCellUpdate }: SheetTableProps) {
     const parentRef = useRef<HTMLDivElement>(null);
 
     if (!data || data.length === 0) {
@@ -50,7 +51,7 @@ export function SheetTable({ data, sheetName, deviceId, onCellUpdate }: SheetTab
         );
     }
 
-    return <VirtualTable data={data} headers={headers} parentRef={parentRef} onCellUpdate={onCellUpdate} />;
+    return <VirtualTable data={data} headers={headers} parentRef={parentRef} onCellUpdate={readOnly ? undefined : onCellUpdate} />;
 }
 
 // Inline edit cell component

@@ -8,7 +8,7 @@ import { DeviceDetail } from '@/components/dashboard/DeviceDetail';
 import { SheetSelectionDialog } from '@/components/dashboard/SheetSelectionDialog';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Upload, CheckCircle2, XCircle, Undo2, Redo2 } from 'lucide-react';
+import { Upload, CheckCircle2, XCircle, Undo2, Redo2, Plus } from 'lucide-react';
 import { useState, useCallback, useEffect } from 'react';
 import {
     Dialog,
@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dialog"
 import { Device } from '@/types/device';
 import { useDeviceStore } from '@/stores/useDeviceStore';
+import { CreateDeviceDialog } from '@/components/dashboard/CreateDeviceDialog';
 
 export default function DevicesPage() {
     const {
@@ -56,13 +57,22 @@ export default function DevicesPage() {
     }, [undo, redo]);
 
     const [isDetailOpen, setIsDetailOpen] = useState(false);
+    const [detailMode, setDetailMode] = useState<'view' | 'edit'>('view');
     const [isImportOpen, setIsImportOpen] = useState(false);
+    const [isCreateOpen, setIsCreateOpen] = useState(false);
     // Files chờ chọn sheet
     const [pendingFiles, setPendingFiles] = useState<File[]>([]);
     const [isSheetSelectOpen, setIsSheetSelectOpen] = useState(false);
 
     const handleViewDevice = (device: Device) => {
         setSelectedDevice(device);
+        setDetailMode('view');
+        setIsDetailOpen(true);
+    };
+
+    const handleUpdateDevice = (device: Device) => {
+        setSelectedDevice(device);
+        setDetailMode('edit');
         setIsDetailOpen(true);
     };
 
@@ -100,6 +110,10 @@ export default function DevicesPage() {
                     </Button>
                     <Button variant="outline" size="icon" onClick={() => redo()} disabled={!canRedo} title="Redo (Ctrl+Y)">
                         <Redo2 className="h-4 w-4" />
+                    </Button>
+                    <Button variant="outline" onClick={() => setIsCreateOpen(true)}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        New Device
                     </Button>
                     <Button onClick={() => setIsImportOpen(true)}>
                         <Upload className="mr-2 h-4 w-4" />
@@ -159,6 +173,7 @@ export default function DevicesPage() {
                     <DeviceList
                         devices={devices}
                         onViewDevice={handleViewDevice}
+                        onUpdateDevice={handleUpdateDevice}
                         onExportDevice={exportDevice}
                         onDeleteDevice={removeDevice}
                     />
@@ -198,9 +213,21 @@ export default function DevicesPage() {
             <DeviceDetail
                 device={selectedDevice}
                 isOpen={isDetailOpen}
+                mode={detailMode}
                 onClose={handleCloseDetail}
                 onExport={exportDevice}
                 onDelete={removeDevice}
+            />
+
+            {/* Create Device Dialog */}
+            <CreateDeviceDialog
+                isOpen={isCreateOpen}
+                onClose={() => setIsCreateOpen(false)}
+                onCreated={(deviceId) => {
+                    const device = devices.find((d) => d.id === deviceId) ||
+                        useDeviceStore.getState().devices.find((d) => d.id === deviceId);
+                    if (device) handleUpdateDevice(device);
+                }}
             />
         </div>
     );
