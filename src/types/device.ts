@@ -42,14 +42,16 @@ export interface Device {
   metadata: DeviceMetadata;
 }
 
-// Sheet names mapping
+// Sheet names mapping - Tieng Viet khong dau de nhat quan voi Python output
 export const SHEET_NAMES = {
-  cau_hinh: 'Cấu hình',
+  cau_hinh: 'Cau hinh',
   license: 'License',
   driver: 'Driver',
-  o_cung: 'Ổ cứng',
+  o_cung: 'O cung',
   ram: 'RAM',
-  phan_mem: 'Phần mềm',
+  phan_mem: 'Phan mem',
+  bios_info: 'BIOS Info',
+  lan: 'LAN',
 } as const;
 
 export type SheetNameKey = keyof typeof SHEET_NAMES;

@@ -41,6 +41,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useState, useCallback, useEffect } from 'react';
 import { useDeviceStore } from '@/stores/useDeviceStore';
+import { SheetTabsCarousel } from '@/components/carousel/SheetTabsCarousel';
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
 import {
     DndContext, closestCenter, KeyboardSensor,
@@ -68,11 +69,13 @@ interface DeviceDetailProps {
     onDelete: (deviceId: string) => void;
 }
 
-// Tên hiển thị đẹp cho sheet
+// Ten hien thi cho sheet - nhat quan voi Python output (khong dau)
 const getDisplayName = (sheetKey: string): string => {
     const mapped = SHEET_NAMES[sheetKey as keyof typeof SHEET_NAMES];
     if (mapped) return mapped;
-    return sheetKey.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+    // Fallback: thay _ bang space, chi capitalize chu dau tien
+    const withSpaces = sheetKey.replace(/_/g, ' ');
+    return withSpaces.charAt(0).toUpperCase() + withSpaces.slice(1);
 };
 
 export function DeviceDetail({
@@ -86,6 +89,7 @@ export function DeviceDetail({
     const [currentMode, setCurrentMode] = useState<'view' | 'edit'>(initialMode);
     const isEditMode = currentMode === 'edit';
     const [searchTerm, setSearchTerm] = useState('');
+    const [activeSheet, setActiveSheet] = useState<string | null>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [editForm, setEditForm] = useState<Partial<DeviceInfo>>({});
     const [newSheetName, setNewSheetName] = useState('');
@@ -352,7 +356,7 @@ export function DeviceDetail({
 
                 {/* ===== CONTENT ===== */}
                 <div className="flex-1 flex flex-col min-h-0 min-w-0 bg-background py-10">
-                    <Tabs defaultValue={displayedSheets[0] || '_empty'} className="flex-1 flex flex-col">
+                    <Tabs value={activeSheet || displayedSheets[0] || '_empty'} onValueChange={setActiveSheet} className="flex-1 flex flex-col">
                         {/* Tab bar + controls */}
                         <div className="flex items-center gap-3 px-5 py-2.5 border-b pr-14">
                             {/* Tabs — View: click bình thường, Edit: sortable + context menu */}
@@ -415,64 +419,60 @@ export function DeviceDetail({
                                         </SortableContext>
                                     </DndContext>
                                 ) : (
-                                    /* View mode — tab click bình thường, không drag, không context menu */
-                                    <TabsList className="h-auto bg-transparent p-0 gap-1.5 overflow-x-auto scrollbar-none flex">
-                                        {displayedSheets.map((sheetName) => (
-                                            <TabsTrigger
-                                                key={sheetName}
-                                                value={sheetName}
-                                                className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-full px-3.5 h-8 border border-transparent data-[state=active]:border-primary/20 capitalize whitespace-nowrap flex-shrink-0"
-                                            >
-                                                {getDisplayName(sheetName)}
-                                                <span className="ml-1.5 text-xs opacity-60">{device.sheets[sheetName]?.length ?? 0}</span>
-                                            </TabsTrigger>
-                                        ))}
-                                    </TabsList>
+                                    /* View mode — Carousel với parallax effect, giới hạn 5 tabs */
+                                    <SheetTabsCarousel
+                                        sheets={displayedSheets}
+                                        activeSheet={activeSheet || displayedSheets[0] || ''}
+                                        onSelectSheet={setActiveSheet}
+                                        getDisplayName={getDisplayName}
+                                        getCount={(sheet) => device.sheets[sheet]?.length ?? 0}
+                                        slidesToShow={5}
+                                    />
                                 )}
-                                {/* Fade gradient bên phải */}
-                                <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none" />
                             </div>
 
                             {/* Spacer */}
                             <div className="flex-1" />
 
-                            {/* Controls — Sheets dropdown + Filter */}
-                            <div className="flex items-center gap-2 flex-shrink-0">
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="outline" size="sm" className="h-8">
-                                            <SlidersHorizontal className="mr-2 h-3.5 w-3.5" />
-                                            Sheets
-                                            <Badge variant="secondary" className="ml-2 px-1.5 text-xs">
-                                                {displayedSheets.length}/{allSheetKeys.length}
-                                            </Badge>
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" className="w-48">
-                                        <DropdownMenuLabel>Hiển thị sheet</DropdownMenuLabel>
-                                        <DropdownMenuSeparator />
-                                        {allSheetKeys.map((sheet) => (
-                                            <DropdownMenuCheckboxItem
-                                                key={sheet}
-                                                checked={visibleSheets.includes(sheet)}
-                                                onCheckedChange={() => toggleSheetVisibility(sheet)}
-                                            >
-                                                {getDisplayName(sheet)}
-                                            </DropdownMenuCheckboxItem>
-                                        ))}
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
+                            {/* Controls — Sheets dropdown + Filter (chi hien thi o View mode) */}
+                            {!isEditMode && (
+                                <div className="flex items-center gap-2 flex-shrink-0">
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="outline" size="sm" className="h-8">
+                                                <SlidersHorizontal className="mr-2 h-3.5 w-3.5" />
+                                                Sheets
+                                                <Badge variant="secondary" className="ml-2 px-1.5 text-xs">
+                                                    {displayedSheets.length}/{allSheetKeys.length}
+                                                </Badge>
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end" className="w-48">
+                                            <DropdownMenuLabel>Hien thi sheet</DropdownMenuLabel>
+                                            <DropdownMenuSeparator />
+                                            {allSheetKeys.map((sheet) => (
+                                                <DropdownMenuCheckboxItem
+                                                    key={sheet}
+                                                    checked={visibleSheets.includes(sheet)}
+                                                    onCheckedChange={() => toggleSheetVisibility(sheet)}
+                                                >
+                                                    {getDisplayName(sheet)}
+                                                </DropdownMenuCheckboxItem>
+                                            ))}
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
 
-                                <div className="relative w-44">
-                                    <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
-                                    <Input
-                                        placeholder="Filter..."
-                                        className="pl-7 h-8 text-sm"
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                    />
+                                    <div className="relative w-44">
+                                        <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
+                                        <Input
+                                            placeholder="Filter..."
+                                            className="pl-7 h-8 text-sm"
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                        />
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
 
                         {/* Sheet content — hoặc empty state */}
@@ -654,7 +654,7 @@ function SortableTab({ id, label, count, onRename, onDelete }: {
                 <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
                     <TabsTrigger
                         value={id}
-                        className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-full px-3.5 h-8 border border-transparent data-[state=active]:border-primary/20 capitalize whitespace-nowrap flex-shrink-0 cursor-grab active:cursor-grabbing"
+                        className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-full px-3.5 h-8 border border-transparent data-[state=active]:border-primary/20 whitespace-nowrap flex-shrink-0 cursor-grab active:cursor-grabbing"
                     >
                         <GripVertical className="h-3 w-3 mr-1 opacity-40" />
                         {label}

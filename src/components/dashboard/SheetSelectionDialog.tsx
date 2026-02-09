@@ -24,12 +24,13 @@ interface SheetSelectionDialogProps {
     onConfirm: (selectedSheets: string[]) => void;
 }
 
-// Map tên sheet normalized → tên hiển thị đẹp
+// Map ten sheet normalized → ten hien thi (nhat quan voi Python output)
 const getDisplayName = (sheetKey: string): string => {
     const mapped = SHEET_NAMES[sheetKey as keyof typeof SHEET_NAMES];
     if (mapped) return mapped;
-    // Capitalize + thay _ bằng space
-    return sheetKey.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+    // Fallback: thay _ bang space, chi capitalize chu dau tien
+    const withSpaces = sheetKey.replace(/_/g, ' ');
+    return withSpaces.charAt(0).toUpperCase() + withSpaces.slice(1);
 };
 
 export function SheetSelectionDialog({
