@@ -227,7 +227,7 @@ export function DeviceList({
                 ),
             },
         ],
-        [onViewDevice, onUpdateDevice, onExportDevice]
+        [onViewDevice, onUpdateDevice, onExportDevice, setDeleteId]
     );
 
     const table = useReactTable({

@@ -118,9 +118,12 @@ export const useDeviceStore = create<DeviceState>()(
                     });
                 }
 
-                // Batch update — gom 1 lần set thay vì N lần
-                set((state) => ({ devices: [...state.devices, ...newDevices] }));
-                set({ isLoading: false, importProgress: INITIAL_PROGRESS });
+                // Batch update — gom tất cả vào 1 lần set duy nhất
+                set((state) => ({
+                    devices: [...state.devices, ...newDevices],
+                    isLoading: false,
+                    importProgress: INITIAL_PROGRESS,
+                }));
 
                 if (failCount === 0) {
                     toast.success(`Imported ${successCount} device(s) successfully`);
@@ -410,3 +413,21 @@ export const useDeviceStore = create<DeviceState>()(
         }
     )
 );
+
+// Hook reactive cho undo/redo — subscribe temporal state thay vì getState()
+// Ref: https://github.com/charkour/zundo#reactive-temporal-store
+import { useStoreWithEqualityFn } from 'zustand/traditional';
+import type { TemporalState } from 'zundo';
+
+type DeviceTemporalState = TemporalState<Pick<DeviceState, 'devices'>>;
+
+export function useTemporalStore(): DeviceTemporalState;
+export function useTemporalStore<T>(selector: (state: DeviceTemporalState) => T): T;
+export function useTemporalStore<T>(
+    selector?: (state: DeviceTemporalState) => T,
+) {
+    return useStoreWithEqualityFn(
+        useDeviceStore.temporal,
+        selector as (state: DeviceTemporalState) => T,
+    );
+}

@@ -114,6 +114,7 @@ export function DeviceDetail({
         setCurrentMode(initialMode);
         setIsEditing(false);
         setEditForm({});
+        setActiveSheet(null); // Reset sheet khi đổi device
     }, [initialMode, isOpen]);
 
     // DnD sensors — chỉ bắt đầu drag sau 5px di chuyển
@@ -375,11 +376,17 @@ export function DeviceDetail({
                                                         isActive={(activeSheet || displayedSheets[0]) === sheetName}
                                                         onRename={() => {
                                                             const newName = prompt('Rename sheet:', sheetName);
-                                                            if (newName) renameSheet(device.id, sheetName, newName);
+                                                            if (newName) {
+                                                                renameSheet(device.id, sheetName, newName);
+                                                                // Cập nhật activeSheet nếu rename sheet đang active
+                                                                if (activeSheet === sheetName) setActiveSheet(newName);
+                                                            }
                                                         }}
                                                         onDelete={allSheetKeys.length > 1 ? () => {
                                                             if (confirm(`Xóa sheet "${getDisplayName(sheetName)}"?`)) {
                                                                 removeSheet(device.id, sheetName);
+                                                                // Reset activeSheet nếu đang xóa sheet đang hiển thị
+                                                                if (activeSheet === sheetName) setActiveSheet(null);
                                                             }
                                                         } : undefined}
                                                     />

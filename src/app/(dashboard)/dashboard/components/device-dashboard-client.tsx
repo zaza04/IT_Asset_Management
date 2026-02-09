@@ -4,14 +4,14 @@ import { StatusDonut } from "@/components/dashboard/StatusDonut"
 import { DeviceOSChart } from "@/components/dashboard/DeviceOSChart"
 import { HardwareOverview } from "@/components/dashboard/HardwareOverview"
 import { RecentActivity } from "@/components/dashboard/RecentActivity"
-import { useDevices } from "@/hooks/useDevices"
+import { useDeviceList } from "@/hooks/useDevices"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Upload, LayoutDashboard } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 export function DeviceDashboardClient() {
-    const { devices } = useDevices()
+    const devices = useDeviceList()
     const router = useRouter()
 
     // Empty dashboard state

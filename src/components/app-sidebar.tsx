@@ -11,7 +11,7 @@ import Link from "next/link"
 
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
-import { useDevices } from "@/hooks/useDevices"
+import { useDeviceList } from "@/hooks/useDevices"
 import { Badge } from "@/components/ui/badge"
 import {
   Sidebar,
@@ -36,7 +36,7 @@ const data = {
 
 // Mini stats component — ẩn khi sidebar collapsed (icon mode)
 function SidebarQuickStats() {
-  const { devices } = useDevices()
+  const devices = useDeviceList()
   const { state } = useSidebar()
 
   if (devices.length === 0 || state === "collapsed") return null
@@ -70,7 +70,7 @@ function SidebarQuickStats() {
 
 // Device count badge cho nav item
 function DeviceCountBadge() {
-  const { devices } = useDevices()
+  const devices = useDeviceList()
   if (devices.length === 0) return null
   return (
     <Badge variant="secondary" className="ml-auto h-5 min-w-5 px-1.5 text-[10px] font-semibold">

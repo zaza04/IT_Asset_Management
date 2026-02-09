@@ -18,7 +18,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog"
 import { Device } from '@/types/device';
-import { useDeviceStore } from '@/stores/useDeviceStore';
+import { useDeviceStore, useTemporalStore } from '@/stores/useDeviceStore';
 import { CreateDeviceDialog } from '@/components/dashboard/CreateDeviceDialog';
 
 export default function DevicesPage() {
@@ -35,8 +35,8 @@ export default function DevicesPage() {
 
     const importProgress = useDeviceStore((s) => s.importProgress);
 
-    // Undo/Redo
-    const { undo, redo, pastStates, futureStates } = useDeviceStore.temporal.getState();
+    // Undo/Redo — reactive subscription thay vì getState()
+    const { undo, redo, pastStates, futureStates } = useTemporalStore((state) => state);
     const canUndo = pastStates.length > 0;
     const canRedo = futureStates.length > 0;
 
