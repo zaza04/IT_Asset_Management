@@ -1,5 +1,6 @@
 "use client"
 
+import * as React from "react"
 import { ChevronRight, type LucideIcon } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -30,6 +31,7 @@ export function NavMain({
     url: string
     icon?: LucideIcon
     isActive?: boolean
+    badge?: React.ReactNode
     items?: {
       title: string
       url: string
@@ -85,10 +87,15 @@ export function NavMain({
                   </CollapsibleContent>
                 </>
               ) : (
-                <SidebarMenuButton asChild tooltip={item.title} className="cursor-pointer" isActive={pathname === item.url}>
+                <SidebarMenuButton asChild tooltip={item.title} className="cursor-pointer relative" isActive={pathname === item.url}>
                   <Link href={item.url}>
+                    {/* Active indicator — bar bên trái */}
+                    {pathname === item.url && (
+                      <span className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-0.5 rounded-full bg-primary" />
+                    )}
                     {item.icon && <item.icon />}
                     <span>{item.title}</span>
+                    {item.badge}
                   </Link>
                 </SidebarMenuButton>
               )}

@@ -3,17 +3,16 @@
 import * as React from "react"
 import {
   LayoutDashboard,
-  AlertTriangle,
   Settings,
   Laptop,
   Server,
 } from "lucide-react"
 import Link from "next/link"
-import { Logo } from "@/components/logo"
-import { SidebarNotification } from "@/components/sidebar-notification"
 
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
+import { useDevices } from "@/hooks/useDevices"
+import { Badge } from "@/components/ui/badge"
 import {
   Sidebar,
   SidebarContent,
@@ -22,6 +21,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarGroup,
+  SidebarGroupLabel,
+  useSidebar,
 } from "@/components/ui/sidebar"
 
 const data = {
@@ -30,7 +32,55 @@ const data = {
     email: "store@example.com",
     avatar: "",
   },
-  navGroups: [
+}
+
+// Mini stats component — ẩn khi sidebar collapsed (icon mode)
+function SidebarQuickStats() {
+  const { devices } = useDevices()
+  const { state } = useSidebar()
+
+  if (devices.length === 0 || state === "collapsed") return null
+
+  const active = devices.filter(d => (d.status ?? 'active') === 'active').length
+  const broken = devices.filter(d => d.status === 'broken').length
+  const inactive = devices.filter(d => d.status === 'inactive').length
+
+  return (
+    <SidebarGroup>
+      <SidebarGroupLabel>Quick Stats</SidebarGroupLabel>
+      <div className="px-2 py-1">
+        <div className="grid grid-cols-3 gap-1.5 text-center">
+          <div className="rounded-md bg-emerald-500/10 px-1.5 py-1.5">
+            <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{active}</p>
+            <p className="text-[10px] text-muted-foreground">Active</p>
+          </div>
+          <div className="rounded-md bg-red-500/10 px-1.5 py-1.5">
+            <p className="text-sm font-bold text-red-600 dark:text-red-400">{broken}</p>
+            <p className="text-[10px] text-muted-foreground">Broken</p>
+          </div>
+          <div className="rounded-md bg-gray-500/10 px-1.5 py-1.5">
+            <p className="text-sm font-bold text-gray-600 dark:text-gray-400">{inactive}</p>
+            <p className="text-[10px] text-muted-foreground">Inactive</p>
+          </div>
+        </div>
+      </div>
+    </SidebarGroup>
+  )
+}
+
+// Device count badge cho nav item
+function DeviceCountBadge() {
+  const { devices } = useDevices()
+  if (devices.length === 0) return null
+  return (
+    <Badge variant="secondary" className="ml-auto h-5 min-w-5 px-1.5 text-[10px] font-semibold">
+      {devices.length}
+    </Badge>
+  )
+}
+
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const navGroups = [
     {
       label: "Dashboards",
       items: [
@@ -43,39 +93,13 @@ const data = {
           title: "Devices",
           url: "/devices",
           icon: Laptop,
+          badge: <DeviceCountBadge />,
         },
       ],
     },
     {
-      label: "Pages",
+      label: "System",
       items: [
-        {
-          title: "Errors",
-          url: "#",
-          icon: AlertTriangle,
-          items: [
-            {
-              title: "Unauthorized",
-              url: "/errors/unauthorized",
-            },
-            {
-              title: "Forbidden",
-              url: "/errors/forbidden",
-            },
-            {
-              title: "Not Found",
-              url: "/errors/not-found",
-            },
-            {
-              title: "Internal Server Error",
-              url: "/errors/internal-server-error",
-            },
-            {
-              title: "Under Maintenance",
-              url: "/errors/under-maintenance",
-            },
-          ],
-        },
         {
           title: "Settings",
           url: "#",
@@ -97,10 +121,8 @@ const data = {
         },
       ],
     },
-  ],
-}
+  ]
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar {...props}>
       <SidebarHeader>
@@ -121,7 +143,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        {data.navGroups.map((group) => (
+        <SidebarQuickStats />
+        {navGroups.map((group) => (
           <NavMain key={group.label} label={group.label} items={group.items} />
         ))}
       </SidebarContent>

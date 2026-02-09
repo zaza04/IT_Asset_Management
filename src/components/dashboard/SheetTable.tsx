@@ -60,6 +60,7 @@ function EditableCell({
     rowIndex,
     column,
     isEditing,
+    isLastColumn,
     onStartEdit,
     onSave,
     onCancel,
@@ -69,7 +70,8 @@ function EditableCell({
     rowIndex: number;
     column: string;
     isEditing: boolean;
-    onStartEdit: () => void;
+    isLastColumn?: boolean;
+    onStartEdit: (() => void) | null;
     onSave: (value: any) => void;
     onCancel: () => void;
     onNavigate: (direction: 'next' | 'prev') => void;
@@ -85,11 +87,13 @@ function EditableCell({
         }
     }, [isEditing, value]);
 
+    const borderClass = isLastColumn ? '' : 'border-r border-border/50';
+
     if (!isEditing) {
         return (
             <TableCell
-                className="whitespace-nowrap px-4 py-3 cursor-text"
-                onDoubleClick={onStartEdit}
+                className={`flex-1 min-w-0 whitespace-nowrap px-4 py-3 ${onStartEdit ? 'cursor-text' : ''} ${borderClass}`}
+                onDoubleClick={onStartEdit || undefined}
             >
                 {value}
             </TableCell>
@@ -97,7 +101,7 @@ function EditableCell({
     }
 
     return (
-        <TableCell className="p-0.5">
+        <TableCell className={`flex-1 min-w-0 p-0.5 ${borderClass}`}>
             <Input
                 ref={inputRef}
                 value={editValue}
@@ -175,9 +179,9 @@ function VirtualTable({
         <div ref={parentRef} className="h-full w-full overflow-auto">
             <table className="w-full caption-bottom text-sm text-left">
                 <thead className="[&_tr]:border-b sticky top-0 bg-background z-10 shadow-sm">
-                    <TableRow>
-                        {headers.map((header) => (
-                            <TableHead key={header} className="whitespace-nowrap px-4 py-3 bg-muted/50 font-medium text-foreground">
+                    <TableRow className="flex w-full">
+                        {headers.map((header, idx) => (
+                            <TableHead key={header} className={`flex-1 min-w-0 whitespace-nowrap px-4 py-3 bg-muted/50 font-medium text-foreground ${idx < headers.length - 1 ? 'border-r border-border/50' : ''}`}>
                                 {header}
                             </TableHead>
                         ))}
@@ -189,7 +193,7 @@ function VirtualTable({
                         return (
                             <TableRow
                                 key={virtualRow.index}
-                                className="hover:bg-muted/5 border-b"
+                                className="hover:bg-muted/5 border-b flex w-full"
                                 style={{
                                     position: 'absolute',
                                     top: 0,
@@ -199,7 +203,7 @@ function VirtualTable({
                                     transform: `translateY(${virtualRow.start}px)`,
                                 }}
                             >
-                                {headers.map((header) => (
+                                {headers.map((header, idx) => (
                                     <EditableCell
                                         key={`${virtualRow.index}-${header}`}
                                         value={row[header]}
@@ -209,9 +213,10 @@ function VirtualTable({
                                             editingCell?.rowIndex === virtualRow.index &&
                                             editingCell?.column === header
                                         }
-                                        onStartEdit={() =>
-                                            onCellUpdate && setEditingCell({ rowIndex: virtualRow.index, column: header })
-                                        }
+                                        isLastColumn={idx === headers.length - 1}
+                                        onStartEdit={onCellUpdate
+                                            ? () => setEditingCell({ rowIndex: virtualRow.index, column: header })
+                                            : null}
                                         onSave={(value) => handleSave(virtualRow.index, header, value)}
                                         onCancel={() => setEditingCell(null)}
                                         onNavigate={(dir) => handleNavigate(virtualRow.index, header, dir)}

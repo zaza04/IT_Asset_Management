@@ -34,7 +34,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Download, Trash2, Calendar, HardDrive, Cpu, Network, Laptop, Search, SlidersHorizontal, Monitor, Pencil, Check, X, Plus, Copy, GripVertical, Eye } from 'lucide-react';
+import { Download, Trash2, Calendar, HardDrive, Cpu, Network, Laptop, Search, SlidersHorizontal, Monitor, Pencil, Check, X, Plus, Copy, MoreVertical, Eye } from 'lucide-react';
 import { Device, DeviceInfo, DeviceStatus, DEVICE_STATUS_CONFIG, SHEET_NAMES } from '@/types/device';
 import { SheetTable } from './SheetTable';
 import { Input } from '@/components/ui/input';
@@ -372,6 +372,7 @@ export function DeviceDetail({
                                                         id={sheetName}
                                                         label={getDisplayName(sheetName)}
                                                         count={device.sheets[sheetName]?.length ?? 0}
+                                                        isActive={(activeSheet || displayedSheets[0]) === sheetName}
                                                         onRename={() => {
                                                             const newName = prompt('Rename sheet:', sheetName);
                                                             if (newName) renameSheet(device.id, sheetName, newName);
@@ -636,9 +637,9 @@ function EditField({ icon, label, value, onChange }: {
     );
 }
 
-// Sortable tab — kéo thả sắp xếp thứ tự sheet
-function SortableTab({ id, label, count, onRename, onDelete }: {
-    id: string; label: string; count: number;
+// Sortable tab — click để view, kebab menu, long press để drag
+function SortableTab({ id, label, count, isActive, onRename, onDelete }: {
+    id: string; label: string; count: number; isActive?: boolean;
     onRename: () => void; onDelete?: () => void;
 }) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
@@ -649,32 +650,51 @@ function SortableTab({ id, label, count, onRename, onDelete }: {
     };
 
     return (
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-                    <TabsTrigger
-                        value={id}
-                        className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-full px-3.5 h-8 border border-transparent data-[state=active]:border-primary/20 whitespace-nowrap flex-shrink-0 cursor-grab active:cursor-grabbing"
+        <div
+            ref={setNodeRef}
+            style={style}
+            {...attributes}
+            {...listeners}
+            className={`flex items-center flex-shrink-0 group rounded-full border transition-colors ${
+                isActive
+                    ? 'bg-primary/10 text-primary border-primary/20'
+                    : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50'
+            }`}
+        >
+            {/* Tab content — click để chọn sheet */}
+            <TabsTrigger
+                value={id}
+                className="bg-transparent border-none shadow-none rounded-full px-3.5 h-8 whitespace-nowrap flex-shrink-0 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+            >
+                {label}
+                <span className="ml-1.5 text-xs opacity-60">{count}</span>
+            </TabsTrigger>
+            {/* Kebab menu — 3-dot để mở Rename/Delete */}
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-6 rounded-full -ml-1 mr-0.5 opacity-0 group-hover:opacity-100 transition-opacity data-[state=open]:opacity-100 hover:bg-transparent"
+                        onClick={(e) => e.stopPropagation()}
                     >
-                        <GripVertical className="h-3 w-3 mr-1 opacity-40" />
-                        {label}
-                        <span className="ml-1.5 text-xs opacity-60">{count}</span>
-                    </TabsTrigger>
-                </div>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-                <DropdownMenuItem onClick={onRename}>
-                    <Pencil className="mr-2 h-3.5 w-3.5" />
-                    Rename
-                </DropdownMenuItem>
-                {onDelete && (
-                    <DropdownMenuItem onClick={onDelete} className="text-destructive focus:text-destructive">
-                        <Trash2 className="mr-2 h-3.5 w-3.5" />
-                        Delete
+                        <MoreVertical className="h-3.5 w-3.5" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                    <DropdownMenuItem onClick={onRename}>
+                        <Pencil className="mr-2 h-3.5 w-3.5" />
+                        Rename
                     </DropdownMenuItem>
-                )}
-            </DropdownMenuContent>
-        </DropdownMenu>
+                    {onDelete && (
+                        <DropdownMenuItem onClick={onDelete} className="text-destructive focus:text-destructive">
+                            <Trash2 className="mr-2 h-3.5 w-3.5" />
+                            Delete
+                        </DropdownMenuItem>
+                    )}
+                </DropdownMenuContent>
+            </DropdownMenu>
+        </div>
     );
 }
 
