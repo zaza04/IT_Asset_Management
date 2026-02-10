@@ -117,6 +117,16 @@ export function DeviceDetail({
         setActiveSheet(null); // Reset sheet khi đổi device
     }, [initialMode, isOpen]);
 
+    // Cảnh báo khi đóng tab/trình duyệt trong edit mode
+    useEffect(() => {
+        if (!isEditMode) return;
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            e.preventDefault();
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [isEditMode]);
+
     // DnD sensors — chỉ bắt đầu drag sau 5px di chuyển
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -310,7 +320,7 @@ export function DeviceDetail({
                                     <InfoRow icon={<Cpu className="h-3.5 w-3.5" />} label="CPU" value={device.deviceInfo.cpu} />
                                     <InfoRow icon={<HardDrive className="h-3.5 w-3.5" />} label="RAM" value={device.deviceInfo.ram} />
                                     <InfoRow icon={<Monitor className="h-3.5 w-3.5" />} label="Arch" value={device.deviceInfo.architecture} />
-                                    <InfoRow icon={<Network className="h-3.5 w-3.5" />} label="MAC" value={device.deviceInfo.mac || 'N/A'} />
+                                    <InfoRow icon={<Network className="h-3.5 w-3.5" />} label="MAC" value={device.deviceInfo.mac || 'Không có'} />
                                 </>
                             )}
                         </div>
@@ -343,7 +353,7 @@ export function DeviceDetail({
                             <div className={`grid gap-2 ${isEditMode ? 'grid-cols-2' : 'grid-cols-1'}`}>
                                 <Button variant="outline" size="sm" className="w-full" onClick={() => onExport(device)}>
                                     <Download className="mr-1.5 h-3.5 w-3.5" />
-                                    Export
+                                    Xuất file
                                 </Button>
                                 {isEditMode && (
                                     <Button variant="outline" size="sm" className="w-full" onClick={() => duplicateDevice(device.id)}>
@@ -648,7 +658,7 @@ function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string;
             <span className="text-muted-foreground mt-0.5 flex-shrink-0">{icon}</span>
             <div className="flex-1 min-w-0">
                 <p className="text-[11px] text-muted-foreground leading-none mb-1">{label}</p>
-                <p className="text-sm font-medium leading-snug break-words">{value || 'N/A'}</p>
+                <p className="text-sm font-medium leading-snug break-words">{value || 'Không có'}</p>
             </div>
         </div>
     );

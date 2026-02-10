@@ -64,9 +64,9 @@ export function RecentActivity({ devices }: RecentActivityProps) {
                                                 </SoftLabel>
                                             </div>
                                             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                                <span>{device.deviceInfo.os || 'N/A'}</span>
+                                                <span>{device.deviceInfo.os || 'Không có'}</span>
                                                 <span>•</span>
-                                                <span>{device.deviceInfo.ram || 'N/A'}</span>
+                                                <span>{device.deviceInfo.ram || 'Không có'}</span>
                                                 <span className="ml-auto">{timeAgo(device.metadata.importedAt)}</span>
                                             </div>
                                         </div>

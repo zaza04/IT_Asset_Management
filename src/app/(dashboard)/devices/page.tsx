@@ -110,11 +110,11 @@ export default function DevicesPage() {
                     <Button variant="outline" size="icon" onClick={() => redo()} disabled={!canRedo} title="Làm lại (Ctrl+Y)" aria-label="Làm lại">
                         <Redo2 className="h-4 w-4" />
                     </Button>
-                    <Button variant="outline" onClick={() => setIsCreateOpen(true)}>
+                    <Button variant="outline" onClick={() => setIsCreateOpen(true)} disabled={importProgress.isImporting}>
                         <Plus className="mr-2 h-4 w-4" />
                         Tạo mới
                     </Button>
-                    <Button onClick={() => setIsImportOpen(true)}>
+                    <Button onClick={() => setIsImportOpen(true)} disabled={importProgress.isImporting}>
                         <Upload className="mr-2 h-4 w-4" />
                         Import Excel
                     </Button>

@@ -166,7 +166,7 @@ export function CommandSearch({ open, onOpenChange }: CommandSearchProps) {
         >
           <CommandInput placeholder="Bạn cần tìm gì?" autoFocus />
           <CommandList>
-            <CommandEmpty>No results found.</CommandEmpty>
+            <CommandEmpty>Không tìm thấy kết quả.</CommandEmpty>
             {Object.entries(groupedItems).map(([group, items]) => (
               <CommandGroup key={group} heading={group}>
                 {items.map((item) => {
