@@ -137,13 +137,14 @@ export function DeviceList({
                     />
                 ),
                 cell: ({ row }) => (
+                    <div data-no-row-click>
                     <Checkbox
                         checked={row.getIsSelected()}
                         onCheckedChange={(value) => row.toggleSelected(!!value)}
                         aria-label="Select row"
                         className="translate-y-[2px]"
-                        onClick={(e) => e.stopPropagation()}
                     />
+                    </div>
                 ),
                 enableSorting: false,
                 enableHiding: false,
@@ -155,8 +156,8 @@ export function DeviceList({
                         variant="ghost"
                         onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
                     >
-                        Device Name
-                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                        Tên thiết bị
+                        <ArrowUpDown className="ml-2 h-4 w-4" aria-hidden="true" />
                     </Button>
                 ),
                 cell: ({ row }) => (
@@ -172,7 +173,7 @@ export function DeviceList({
             },
             {
                 accessorKey: 'status',
-                header: 'Status',
+                header: 'Trạng thái',
                 cell: ({ row }) => <StatusLabel status={row.original.status ?? 'active'} />,
             },
             {
@@ -182,8 +183,8 @@ export function DeviceList({
                         variant="ghost"
                         onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
                     >
-                        Imported
-                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                        Ngày import
+                        <ArrowUpDown className="ml-2 h-4 w-4" aria-hidden="true" />
                     </Button>
                 ),
                 cell: ({ row }) => (
@@ -196,34 +197,36 @@ export function DeviceList({
                 id: 'actions',
                 header: '',
                 cell: ({ row }) => (
+                    <div data-no-row-click>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}>
-                                <MoreHorizontal className="h-4 w-4" />
+                            <Button variant="ghost" size="icon" aria-label="Hành động">
+                                <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => onViewDevice(row.original)}>
                                 <Eye className="mr-2 h-4 w-4" />
-                                View Details
+                                Xem chi tiết
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => onUpdateDevice(row.original)}>
                                 <Pencil className="mr-2 h-4 w-4" />
-                                Update
+                                Chỉnh sửa
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => onExportDevice(row.original)}>
                                 <Download className="mr-2 h-4 w-4" />
-                                Export
+                                Xuất file
                             </DropdownMenuItem>
                             <DropdownMenuItem
                                 onClick={() => setDeleteId(row.original.id)}
                                 className="text-destructive focus:text-destructive"
                             >
                                 <Trash2 className="mr-2 h-4 w-4" />
-                                Delete
+                                Xóa
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
+                    </div>
                 ),
             },
         ],
@@ -257,9 +260,9 @@ export function DeviceList({
             {/* Search + Filter bar */}
             <div className="flex items-center gap-3">
                 <div className="relative flex-1 max-w-sm">
-                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" aria-hidden="true" />
                     <Input
-                        placeholder="Search devices..."
+                        placeholder="Tìm kiếm thiết bị…"
                         value={globalFilter ?? ''}
                         onChange={(e) => setGlobalFilter(e.target.value)}
                         className="pl-8 h-9"
@@ -268,11 +271,11 @@ export function DeviceList({
                 {/* Status filter */}
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger className="w-[180px] h-9">
-                        <Filter className="mr-2 h-3.5 w-3.5" />
+                        <Filter className="mr-2 h-3.5 w-3.5" aria-hidden="true" />
                         <SelectValue placeholder="Filter status" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="all">All Status ({devices.length})</SelectItem>
+                        <SelectItem value="all">Tất cả ({devices.length})</SelectItem>
                         <SelectItem value="active">
                             🟢 Đang sử dụng ({devices.filter(d => (d.status ?? 'active') === 'active').length})
                         </SelectItem>
@@ -290,7 +293,7 @@ export function DeviceList({
             {Object.keys(rowSelection).length > 0 && (
                 <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg border">
                     <span className="text-sm font-medium">
-                        {Object.keys(rowSelection).length} selected
+                        {Object.keys(rowSelection).length} đã chọn
                     </span>
                     <div className="flex items-center gap-2 ml-auto">
                         {/* Bulk set status */}
@@ -300,8 +303,8 @@ export function DeviceList({
                             setRowSelection({});
                         }}>
                             <SelectTrigger className="w-[150px] h-8 text-xs">
-                                <CheckCircle2 className="mr-1 h-3.5 w-3.5" />
-                                <SelectValue placeholder="Set Status" />
+                                <CheckCircle2 className="mr-1 h-3.5 w-3.5" aria-hidden="true" />
+                                <SelectValue placeholder="Đặt trạng thái" />
                             </SelectTrigger>
                             <SelectContent>
                                 {Object.entries(DEVICE_STATUS_CONFIG).map(([key, config]) => (
@@ -319,14 +322,14 @@ export function DeviceList({
                             selectedRows.forEach((row) => onExportDevice(row.original));
                             setRowSelection({});
                         }}>
-                            <Download className="mr-1 h-3.5 w-3.5" />
-                            Export
+                            <Download className="mr-1 h-3.5 w-3.5" aria-hidden="true" />
+                            Xuất file
                         </Button>
 
                         {/* Bulk delete */}
                         <Button variant="destructive" size="sm" className="h-8" onClick={() => setBulkDeleteOpen(true)}>
-                            <Trash2 className="mr-1 h-3.5 w-3.5" />
-                            Delete
+                            <Trash2 className="mr-1 h-3.5 w-3.5" aria-hidden="true" />
+                            Xóa
                         </Button>
                     </div>
                 </div>
@@ -356,7 +359,12 @@ export function DeviceList({
                                 <TableRow
                                     key={row.id}
                                     className="cursor-pointer hover:bg-muted/50"
-                                    onClick={() => onViewDevice(row.original)}
+                                    onClick={(e) => {
+                                        // Không mở view modal khi click vào actions column hoặc checkbox
+                                        const target = e.target as HTMLElement;
+                                        if (target.closest('[data-no-row-click]')) return;
+                                        onViewDevice(row.original);
+                                    }}
                                 >
                                     {row.getVisibleCells().map((cell) => (
                                         <TableCell key={cell.id}>
@@ -371,7 +379,7 @@ export function DeviceList({
                         ) : (
                             <TableRow>
                                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                                    No devices found
+                                    Không tìm thấy thiết bị
                                 </TableCell>
                             </TableRow>
                         )}
@@ -383,7 +391,7 @@ export function DeviceList({
             {/* Pagination */}
             <div className="flex items-center justify-between">
                 <div className="text-sm text-muted-foreground">
-                    {table.getFilteredRowModel().rows.length} device(s)
+                    {table.getFilteredRowModel().rows.length} thiết bị
                 </div>
                 <div className="flex items-center space-x-2">
                     <Button
@@ -392,7 +400,7 @@ export function DeviceList({
                         onClick={() => table.previousPage()}
                         disabled={!table.getCanPreviousPage()}
                     >
-                        Previous
+                        Trước
                     </Button>
                     <Button
                         variant="outline"
@@ -400,7 +408,7 @@ export function DeviceList({
                         onClick={() => table.nextPage()}
                         disabled={!table.getCanNextPage()}
                     >
-                        Next
+                        Sau
                     </Button>
                 </div>
             </div>
@@ -408,14 +416,13 @@ export function DeviceList({
             <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete the device
-                            and remove its data.
+                            Hành động này không thể hoàn tác. Thiết bị và toàn bộ dữ liệu sẽ bị xóa vĩnh viễn.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel>Hủy</AlertDialogCancel>
                         <AlertDialogAction
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                             onClick={() => {
@@ -425,7 +432,7 @@ export function DeviceList({
                                 }
                             }}
                         >
-                            Delete
+                            Xóa
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
@@ -435,13 +442,13 @@ export function DeviceList({
             <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Delete {Object.keys(rowSelection).length} devices?</AlertDialogTitle>
+                        <AlertDialogTitle>Xóa {Object.keys(rowSelection).length} thiết bị?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            This will permanently delete all selected devices and their data.
+                            Tất cả thiết bị đã chọn và dữ liệu sẽ bị xóa vĩnh viễn.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel>Hủy</AlertDialogCancel>
                         <AlertDialogAction
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                             onClick={() => {
@@ -451,7 +458,7 @@ export function DeviceList({
                                 setBulkDeleteOpen(false);
                             }}
                         >
-                            Delete All
+                            Xóa tất cả
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

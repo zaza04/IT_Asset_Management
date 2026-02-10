@@ -50,9 +50,9 @@ export default function AccountSettings() {
   return (
     <div className="space-y-6 px-4 lg:px-6">
         <div>
-          <h1 className="text-3xl font-bold">Account Settings</h1>
+          <h1 className="text-3xl font-bold">Cài đặt tài khoản</h1>
           <p className="text-muted-foreground">
-            Manage your account settings and preferences.
+            Quản lý cài đặt và tùy chọn tài khoản.
           </p>
         </div>
 
@@ -184,13 +184,13 @@ export default function AccountSettings() {
                 <Separator />
                 <div className="flex flex-wrap gap-2 items-center justify-between">
                   <div>
-                    <h4 className="font-semibold">Delete Account</h4>
+                    <h4 className="font-semibold">Xóa tài khoản</h4>
                     <p className="text-sm text-muted-foreground">
-                      Permanently delete your account and all associated data.
+                      Xóa vĩnh viễn tài khoản và toàn bộ dữ liệu liên quan.
                     </p>
                   </div>
                   <Button variant="destructive" type="button" className="cursor-pointer">
-                    Delete Account
+                    Xóa tài khoản
                   </Button>
                 </div>
               </CardContent>

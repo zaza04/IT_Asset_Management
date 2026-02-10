@@ -97,7 +97,7 @@ export function SheetSelectionDialog({
                 {isScanning ? (
                     <div className="flex flex-col items-center justify-center py-8 gap-3">
                         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                        <p className="text-sm text-muted-foreground">Đang scan sheet names...</p>
+                        <p className="text-sm text-muted-foreground">Đang quét sheet names…</p>
                     </div>
                 ) : availableSheets.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">

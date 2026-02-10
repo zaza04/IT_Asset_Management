@@ -1,5 +1,6 @@
 "use client"
 
+import * as React from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Device, DeviceStatus, DEVICE_STATUS_CONFIG } from "@/types/device"
 import { SoftLabel } from "@/components/ui/soft-label"
@@ -28,19 +29,22 @@ function timeAgo(dateStr: string): string {
 }
 
 export function RecentActivity({ devices }: RecentActivityProps) {
-    const recentDevices = [...devices]
-        .sort((a, b) => new Date(b.metadata.importedAt).getTime() - new Date(a.metadata.importedAt).getTime())
-        .slice(0, 6);
+    const recentDevices = React.useMemo(() =>
+        [...devices]
+            .sort((a, b) => new Date(b.metadata.importedAt).getTime() - new Date(a.metadata.importedAt).getTime())
+            .slice(0, 6),
+        [devices]
+    );
 
     return (
         <Card className="h-full">
             <CardHeader className="pb-2">
-                <CardTitle className="text-base font-semibold">Recent Activity</CardTitle>
+                <CardTitle className="text-base font-semibold">Hoạt động gần đây</CardTitle>
             </CardHeader>
             <CardContent>
                 {recentDevices.length === 0 ? (
                     <div className="text-center text-muted-foreground py-8 text-sm">
-                        No activity yet
+                        Chưa có hoạt động nào
                     </div>
                 ) : (
                     <div className="relative">
@@ -60,9 +64,9 @@ export function RecentActivity({ devices }: RecentActivityProps) {
                                                 </SoftLabel>
                                             </div>
                                             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                                <span>{device.deviceInfo.os}</span>
+                                                <span>{device.deviceInfo.os || 'N/A'}</span>
                                                 <span>•</span>
-                                                <span>{device.deviceInfo.ram}</span>
+                                                <span>{device.deviceInfo.ram || 'N/A'}</span>
                                                 <span className="ml-auto">{timeAgo(device.metadata.importedAt)}</span>
                                             </div>
                                         </div>

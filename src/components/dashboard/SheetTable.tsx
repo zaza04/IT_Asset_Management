@@ -25,7 +25,7 @@ export function SheetTable({ data, sheetName, deviceId, readOnly, onCellUpdate }
     const parentRef = useRef<HTMLDivElement>(null);
 
     if (!data || data.length === 0) {
-        return <div className="p-4 text-center text-muted-foreground">No data in this sheet</div>;
+        return <div className="p-4 text-center text-muted-foreground">Không có dữ liệu trong sheet này</div>;
     }
 
     const headers = Object.keys(data[0]);
@@ -107,6 +107,7 @@ function EditableCell({
                 value={editValue}
                 onChange={(e) => setEditValue(e.target.value)}
                 className="h-8 text-sm border-primary/50 focus-visible:ring-1"
+                aria-label="Chỉnh sửa ô"
                 onBlur={() => onSave(editValue)}
                 onKeyDown={(e) => {
                     if (e.key === 'Enter') {

@@ -47,20 +47,20 @@ function SidebarQuickStats() {
 
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>Quick Stats</SidebarGroupLabel>
+      <SidebarGroupLabel>Thống kê nhanh</SidebarGroupLabel>
       <div className="px-2 py-1">
         <div className="grid grid-cols-3 gap-1.5 text-center">
           <div className="rounded-md bg-emerald-500/10 px-1.5 py-1.5">
             <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{active}</p>
-            <p className="text-[10px] text-muted-foreground">Active</p>
+            <p className="text-[10px] text-muted-foreground">Hoạt động</p>
           </div>
           <div className="rounded-md bg-red-500/10 px-1.5 py-1.5">
             <p className="text-sm font-bold text-red-600 dark:text-red-400">{broken}</p>
-            <p className="text-[10px] text-muted-foreground">Broken</p>
+            <p className="text-[10px] text-muted-foreground">Hư hỏng</p>
           </div>
           <div className="rounded-md bg-gray-500/10 px-1.5 py-1.5">
             <p className="text-sm font-bold text-gray-600 dark:text-gray-400">{inactive}</p>
-            <p className="text-[10px] text-muted-foreground">Inactive</p>
+            <p className="text-[10px] text-muted-foreground">Không dùng</p>
           </div>
         </div>
       </div>
@@ -82,15 +82,15 @@ function DeviceCountBadge() {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const navGroups = [
     {
-      label: "Dashboards",
+      label: "Tổng quan",
       items: [
         {
-          title: "Dashboard",
+          title: "Bảng điều khiển",
           url: "/dashboard",
           icon: LayoutDashboard,
         },
         {
-          title: "Devices",
+          title: "Thiết bị",
           url: "/devices",
           icon: Laptop,
           badge: <DeviceCountBadge />,
@@ -98,23 +98,23 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       ],
     },
     {
-      label: "System",
+      label: "Hệ thống",
       items: [
         {
-          title: "Settings",
+          title: "Cài đặt",
           url: "#",
           icon: Settings,
           items: [
             {
-              title: "User Settings",
+              title: "Người dùng",
               url: "/settings/user",
             },
             {
-              title: "Account Settings",
+              title: "Tài khoản",
               url: "/settings/account",
             },
             {
-              title: "Appearance",
+              title: "Giao diện",
               url: "/settings/appearance",
             },
           ],
@@ -134,8 +134,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <Server size={24} className="text-current" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">IT Asset Manager</span>
-                  <span className="truncate text-xs">Device Management</span>
+                  <span className="truncate font-medium">IT Asset Management</span>
+                  <span className="truncate text-xs">Quản lý tài sản</span>
                 </div>
               </Link>
             </SidebarMenuButton>

@@ -31,10 +31,11 @@ const RAM_COLORS: Record<string, string> = {
 // CPU color palette — tông tím gradient
 const CPU_COLORS = ['#c4b5fd', '#a78bfa', '#8b5cf6', '#7c3aed', '#6d28d9', '#5b21b6', '#4c1d95']
 
-// Parse "16 GB" → 16
+// Parse "16 GB" → 16, trả về -1 nếu rỗng
 function parseRAM(ram: string): number {
+    if (!ram) return -1;
     const match = ram.match(/(\d+)/);
-    return match ? parseInt(match[1]) : 0;
+    return match ? parseInt(match[1]) : -1;
 }
 
 // Nhóm RAM theo ranges
@@ -50,7 +51,7 @@ function groupRAM(devices: Device[]) {
         label: r.label,
         count: devices.filter(d => {
             const v = parseRAM(d.deviceInfo.ram)
-            return v >= r.min && v < r.max
+            return v >= 0 && v >= r.min && v < r.max
         }).length,
         fill: RAM_COLORS[r.label] || '#3b82f6',
     })).filter(d => d.count > 0)
@@ -60,7 +61,8 @@ function groupRAM(devices: Device[]) {
 function groupCPU(devices: Device[]) {
     const brands: Record<string, number> = {}
     devices.forEach(d => {
-        const cpu = d.deviceInfo.cpu.toLowerCase()
+        const cpu = (d.deviceInfo.cpu || '').toLowerCase()
+        if (!cpu) return
         let brand = 'Other'
         if (cpu.includes('i3') || cpu.includes('core i3')) brand = 'Intel i3'
         else if (cpu.includes('i5') || cpu.includes('core i5')) brand = 'Intel i5'
@@ -118,7 +120,7 @@ function ColumnChart({ data }: { data: { label: string; count: number; fill: str
                         backgroundColor: 'hsl(var(--card))',
                         color: 'hsl(var(--foreground))',
                     }}
-                    formatter={(value) => [`${value} devices`, 'Số lượng']}
+                    formatter={(value) => [`${value} thiết bị`, 'Số lượng']}
                 />
                 <Bar dataKey="count" radius={[4, 4, 0, 0]} maxBarSize={40}>
                     {data.map((entry) => (
@@ -137,7 +139,7 @@ export function HardwareOverview({ devices }: HardwareOverviewProps) {
     return (
         <Card className="h-full">
             <CardHeader className="pb-2">
-                <CardTitle className="text-base font-semibold">Hardware Overview</CardTitle>
+                <CardTitle className="text-base font-semibold">Tổng quan phần cứng</CardTitle>
             </CardHeader>
             <CardContent>
                 <Tabs defaultValue="ram">

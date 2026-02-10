@@ -1,7 +1,6 @@
 "use client";
 
 import { useDevices } from '@/hooks/useDevices';
-import { StatsCards } from '@/components/dashboard/StatsCards';
 import { ImportDevice } from '@/components/dashboard/ImportDevice';
 import { DeviceList } from '@/components/dashboard/DeviceList';
 import { DeviceDetail } from '@/components/dashboard/DeviceDetail';
@@ -103,17 +102,17 @@ export default function DevicesPage() {
     return (
         <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
             <div className="flex items-center justify-between space-y-2">
-                <h2 className="text-3xl font-bold tracking-tight">Devices</h2>
+                <h2 className="text-3xl font-bold tracking-tight">Thiết bị</h2>
                 <div className="flex items-center space-x-2">
-                    <Button variant="outline" size="icon" onClick={() => undo()} disabled={!canUndo} title="Undo (Ctrl+Z)">
+                    <Button variant="outline" size="icon" onClick={() => undo()} disabled={!canUndo} title="Hoàn tác (Ctrl+Z)" aria-label="Hoàn tác">
                         <Undo2 className="h-4 w-4" />
                     </Button>
-                    <Button variant="outline" size="icon" onClick={() => redo()} disabled={!canRedo} title="Redo (Ctrl+Y)">
+                    <Button variant="outline" size="icon" onClick={() => redo()} disabled={!canRedo} title="Làm lại (Ctrl+Y)" aria-label="Làm lại">
                         <Redo2 className="h-4 w-4" />
                     </Button>
                     <Button variant="outline" onClick={() => setIsCreateOpen(true)}>
                         <Plus className="mr-2 h-4 w-4" />
-                        New Device
+                        Tạo mới
                     </Button>
                     <Button onClick={() => setIsImportOpen(true)}>
                         <Upload className="mr-2 h-4 w-4" />
@@ -127,7 +126,7 @@ export default function DevicesPage() {
                 <div className="rounded-lg border bg-card p-4 space-y-3">
                     <div className="flex items-center justify-between text-sm">
                         <span className="font-medium">
-                            Importing... {importProgress.current}/{importProgress.total}
+                        Đang import… {importProgress.current}/{importProgress.total}
                         </span>
                         <div className="flex items-center gap-3 text-xs text-muted-foreground">
                             {importProgress.successCount > 0 && (
@@ -150,21 +149,18 @@ export default function DevicesPage() {
                 </div>
             )}
 
-            {/* Stats cards tổng quan */}
-            {devices.length > 0 && <StatsCards devices={devices} />}
-
             {devices.length === 0 ? (
                 /* Empty state */
                 <div className="flex flex-col items-center justify-center py-20 text-center">
                     <div className="rounded-full bg-muted p-6 mb-6">
-                        <Upload className="h-10 w-10 text-muted-foreground" />
+                        <Upload className="h-10 w-10 text-muted-foreground" aria-hidden="true" />
                     </div>
                     <h3 className="text-xl font-semibold mb-2">Chưa có thiết bị nào</h3>
                     <p className="text-muted-foreground mb-6 max-w-sm">
                         Import file Excel (.xlsx) để bắt đầu quản lý thiết bị. Hỗ trợ import nhiều files cùng lúc.
                     </p>
                     <Button size="lg" onClick={() => setIsImportOpen(true)}>
-                        <Upload className="mr-2 h-5 w-5" />
+                        <Upload className="mr-2 h-5 w-5" aria-hidden="true" />
                         Import thiết bị đầu tiên
                     </Button>
                 </div>
@@ -184,9 +180,9 @@ export default function DevicesPage() {
             <Dialog open={isImportOpen} onOpenChange={setIsImportOpen}>
                 <DialogContent className="sm:max-w-[600px]">
                     <DialogHeader>
-                        <DialogTitle>Import Devices</DialogTitle>
+                        <DialogTitle>Import thiết bị</DialogTitle>
                         <DialogDescription>
-                            Drag and drop your Excel file here to import devices.
+                            Kéo thả file Excel vào đây để import thiết bị.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="py-4">

@@ -43,25 +43,25 @@ export function ImportDevice({ onImport, onImportMultiple, isLoading }: ImportDe
                     <input {...getInputProps()} />
 
                     {isLoading ? (
-                        <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
+                        <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" aria-hidden="true" />
                     ) : (
                         <div className="bg-primary/10 p-4 rounded-full">
-                            <Upload className="h-8 w-8 text-primary" />
+                            <Upload className="h-8 w-8 text-primary" aria-hidden="true" />
                         </div>
                     )}
 
                     <div className="space-y-1">
                         <h3 className="font-semibold text-lg">
-                            {isLoading ? "Importing..." : isDragActive ? "Drop files here" : "Import Excel Files"}
+                            {isLoading ? "Đang import…" : isDragActive ? "Thả file vào đây" : "Import file Excel"}
                         </h3>
                         <p className="text-sm text-muted-foreground">
-                            Drag & drop or click to upload (single or multiple files)
+                            Kéo thả hoặc bấm để tải lên (hỗ trợ nhiều file)
                         </p>
                     </div>
 
                     <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted px-3 py-1 rounded-full">
                         <FileSpreadsheet className="h-3 w-3" />
-                        <span>Support .xlsx, .xls • Multiple files</span>
+                        <span>Hỗ trợ .xlsx, .xls • Nhiều file</span>
                     </div>
                 </div>
             </CardContent>

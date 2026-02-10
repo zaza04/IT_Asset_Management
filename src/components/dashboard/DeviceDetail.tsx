@@ -34,7 +34,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Download, Trash2, Calendar, HardDrive, Cpu, Network, Laptop, Search, SlidersHorizontal, Monitor, Pencil, Check, X, Plus, Copy, MoreVertical, Eye } from 'lucide-react';
+import { Download, Trash2, Calendar, HardDrive, Cpu, Network, Laptop, Search, SlidersHorizontal, Monitor, Pencil, Check, X, Plus, Copy, MoreVertical, Eye, CheckCircle2 } from 'lucide-react';
 import { Device, DeviceInfo, DeviceStatus, DEVICE_STATUS_CONFIG, SHEET_NAMES } from '@/types/device';
 import { SheetTable } from './SheetTable';
 import { Input } from '@/components/ui/input';
@@ -172,25 +172,54 @@ export function DeviceDetail({
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[90vw] w-full h-[90vh] flex flex-row p-0 gap-0 overflow-hidden">
+            <DialogContent className="sm:max-w-[90vw] w-full h-[90vh] flex flex-row p-0 gap-0 overflow-hidden overscroll-contain">
                 {/* Accessible title — ẩn cho screen reader */}
                 <VisuallyHidden.Root>
                     <DialogTitle>{device.deviceInfo.name}</DialogTitle>
                 </VisuallyHidden.Root>
 
                 {/* Toggle View ↔ Edit — góc trên trái */}
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute top-2 left-2 z-20 h-8 w-8"
-                    onClick={() => {
-                        setCurrentMode((m) => m === 'view' ? 'edit' : 'view');
-                        if (isEditing) cancelEditing();
-                    }}
-                    title={isEditMode ? 'Chuyển sang View' : 'Chuyển sang Edit'}
-                >
-                    {isEditMode ? <Eye className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
-                </Button>
+                {!isEditMode && (
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute top-2 left-2 z-20 h-8 w-8"
+                        onClick={() => setCurrentMode('edit')}
+                        title="Chuyển sang chỉnh sửa"
+                        aria-label="Chuyển sang chỉnh sửa"
+                    >
+                        <Pencil className="h-4 w-4" />
+                    </Button>
+                )}
+
+                {/* Edit mode — Save + Cancel bar ở góc trên trái */}
+                {isEditMode && (
+                    <div className="absolute top-2 left-2 z-20 flex items-center gap-1.5">
+                        <Button
+                            size="sm"
+                            className="h-8 text-xs"
+                            onClick={() => {
+                                if (isEditing) saveEditing();
+                                setCurrentMode('view');
+                            }}
+                        >
+                            <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />
+                            Lưu
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 text-xs"
+                            onClick={() => {
+                                if (isEditing) cancelEditing();
+                                setCurrentMode('view');
+                            }}
+                        >
+                            <X className="mr-1.5 h-3.5 w-3.5" />
+                            Hủy
+                        </Button>
+                    </div>
+                )}
 
                 {/* ===== SIDEBAR ===== */}
                 <div className="w-[300px] flex-shrink-0 border-r flex flex-col bg-muted/5 overflow-y-auto pt-10">
@@ -253,15 +282,15 @@ export function DeviceDetail({
                                 {isEditMode && (
                                     isEditing ? (
                                         <div className="flex gap-1">
-                                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={saveEditing}>
+                                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={saveEditing} aria-label="Lưu thay đổi">
                                                 <Check className="h-3.5 w-3.5 text-emerald-500" />
                                             </Button>
-                                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={cancelEditing}>
+                                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={cancelEditing} aria-label="Hủy thay đổi">
                                                 <X className="h-3.5 w-3.5 text-muted-foreground" />
                                             </Button>
                                         </div>
                                     ) : (
-                                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={startEditing}>
+                                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={startEditing} aria-label="Chỉnh sửa thông tin">
                                             <Pencil className="h-3 w-3 text-muted-foreground" />
                                         </Button>
                                     )
@@ -302,7 +331,7 @@ export function DeviceDetail({
                                 </div>
                                 <div className="flex items-center gap-2 text-muted-foreground">
                                     <SlidersHorizontal className="h-3.5 w-3.5" />
-                                    <span className="text-xs">{device.metadata.totalSheets} sheets • {device.metadata.totalRows} rows</span>
+                                    <span className="text-xs">{device.metadata.totalSheets} sheet • {device.metadata.totalRows} dòng</span>
                                 </div>
                             </div>
                         </div>
@@ -319,7 +348,7 @@ export function DeviceDetail({
                                 {isEditMode && (
                                     <Button variant="outline" size="sm" className="w-full" onClick={() => duplicateDevice(device.id)}>
                                         <Copy className="mr-1.5 h-3.5 w-3.5" />
-                                        Duplicate
+                                        Nhân bản
                                     </Button>
                                 )}
                             </div>
@@ -327,7 +356,7 @@ export function DeviceDetail({
                                 <AlertDialogTrigger asChild>
                                     <Button variant="outline" size="sm" className="w-full text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30">
                                         <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-                                        Delete
+                                        Xóa
                                     </Button>
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>
@@ -375,7 +404,7 @@ export function DeviceDetail({
                                                         count={device.sheets[sheetName]?.length ?? 0}
                                                         isActive={(activeSheet || displayedSheets[0]) === sheetName}
                                                         onRename={() => {
-                                                            const newName = prompt('Rename sheet:', sheetName);
+                                                            const newName = prompt('Đổi tên sheet:', sheetName);
                                                             if (newName) {
                                                                 renameSheet(device.id, sheetName, newName);
                                                                 // Cập nhật activeSheet nếu rename sheet đang active
@@ -407,7 +436,7 @@ export function DeviceDetail({
                                                         <Input
                                                             value={newSheetName}
                                                             onChange={(e) => setNewSheetName(e.target.value)}
-                                                            placeholder="Sheet name..."
+                                                            placeholder="Tên sheet…"
                                                             className="h-7 w-28 text-xs"
                                                             autoFocus
                                                             onBlur={() => setIsAddingSheet(false)}
@@ -456,7 +485,7 @@ export function DeviceDetail({
                                             </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end" className="w-48">
-                                            <DropdownMenuLabel>Hien thi sheet</DropdownMenuLabel>
+                                            <DropdownMenuLabel>Hiển thị sheet</DropdownMenuLabel>
                                             <DropdownMenuSeparator />
                                             {allSheetKeys.map((sheet) => (
                                                 <DropdownMenuCheckboxItem
@@ -473,7 +502,7 @@ export function DeviceDetail({
                                     <div className="relative w-44">
                                         <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
                                         <Input
-                                            placeholder="Filter..."
+                                            placeholder="Lọc…"
                                             className="pl-7 h-8 text-sm"
                                             value={searchTerm}
                                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -539,11 +568,11 @@ export function DeviceDetail({
                                                                 <Input
                                                                     value={newColumnName}
                                                                     onChange={(e) => setNewColumnName(e.target.value)}
-                                                                    placeholder="Column name..."
+                                                                    placeholder="Tên cột…"
                                                                     className="h-8 w-40 text-sm"
                                                                     autoFocus
                                                                 />
-                                                                <Button type="submit" size="sm">Add</Button>
+                                                                <Button type="submit" size="sm">Thêm</Button>
                                                             </form>
                                                         ) : (
                                                             <Button size="sm" variant="outline" onClick={() => setAddingColumnSheet(sheetName)}>
@@ -565,7 +594,7 @@ export function DeviceDetail({
                                                     onClick={() => addSheetRow(device.id, sheetName)}
                                                 >
                                                     <Plus className="mr-1 h-3 w-3" />
-                                                    Add Row
+                                                    Thêm dòng
                                                 </Button>
                                                 {addingColumnSheet === sheetName ? (
                                                     <form
@@ -582,7 +611,7 @@ export function DeviceDetail({
                                                         <Input
                                                             value={newColumnName}
                                                             onChange={(e) => setNewColumnName(e.target.value)}
-                                                            placeholder="Column..."
+                                                            placeholder="Tên cột…"
                                                             className="h-7 w-28 text-xs"
                                                             autoFocus
                                                             onBlur={() => setAddingColumnSheet(null)}
@@ -596,7 +625,7 @@ export function DeviceDetail({
                                                         onClick={() => setAddingColumnSheet(sheetName)}
                                                     >
                                                         <Plus className="mr-1 h-3 w-3" />
-                                                        Add Column
+                                                        Thêm cột
                                                     </Button>
                                                 )}
                                             </div>
@@ -684,6 +713,7 @@ function SortableTab({ id, label, count, isActive, onRename, onDelete }: {
                         size="icon"
                         className="h-7 w-6 rounded-full -ml-1 mr-0.5 opacity-0 group-hover:opacity-100 transition-opacity data-[state=open]:opacity-100 hover:bg-transparent"
                         onClick={(e) => e.stopPropagation()}
+                        aria-label="Tùy chọn sheet"
                     >
                         <MoreVertical className="h-3.5 w-3.5" />
                     </Button>
@@ -691,12 +721,12 @@ function SortableTab({ id, label, count, isActive, onRename, onDelete }: {
                 <DropdownMenuContent align="start">
                     <DropdownMenuItem onClick={onRename}>
                         <Pencil className="mr-2 h-3.5 w-3.5" />
-                        Rename
+                        Đổi tên
                     </DropdownMenuItem>
                     {onDelete && (
                         <DropdownMenuItem onClick={onDelete} className="text-destructive focus:text-destructive">
                             <Trash2 className="mr-2 h-3.5 w-3.5" />
-                            Delete
+                            Xóa
                         </DropdownMenuItem>
                     )}
                 </DropdownMenuContent>

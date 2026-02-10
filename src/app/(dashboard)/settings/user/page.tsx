@@ -333,7 +333,7 @@ export default function UserSettingsPage() {
                   <FormLabel>Bio</FormLabel>
                   <FormControl>
                     <Textarea 
-                      placeholder="Tell us a little about yourself..." 
+                      placeholder="Giới thiệu ngắn về bản thân…" 
                       className="min-h-[100px]"
                       {...field}
                     />

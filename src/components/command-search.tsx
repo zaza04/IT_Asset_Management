@@ -117,21 +117,21 @@ export function CommandSearch({ open, onOpenChange }: CommandSearchProps) {
   const commandRef = React.useRef<HTMLDivElement>(null)
 
   const searchItems: SearchItem[] = [
-    // Dashboards
-    { title: "Dashboard", url: "/dashboard", group: "Dashboards", icon: LayoutDashboard },
-    { title: "Devices", url: "/devices", group: "Dashboards", icon: LayoutDashboard },
+    // Tổng quan
+    { title: "Bảng điều khiển", url: "/dashboard", group: "Tổng quan", icon: LayoutDashboard },
+    { title: "Thiết bị", url: "/devices", group: "Tổng quan", icon: LayoutDashboard },
 
-    // Errors
-    { title: "Unauthorized", url: "/errors/unauthorized", group: "Errors", icon: AlertTriangle },
-    { title: "Forbidden", url: "/errors/forbidden", group: "Errors", icon: AlertTriangle },
-    { title: "Not Found", url: "/errors/not-found", group: "Errors", icon: AlertTriangle },
-    { title: "Internal Server Error", url: "/errors/internal-server-error", group: "Errors", icon: AlertTriangle },
-    { title: "Under Maintenance", url: "/errors/under-maintenance", group: "Errors", icon: AlertTriangle },
+    // Lỗi
+    { title: "Unauthorized", url: "/errors/unauthorized", group: "Lỗi", icon: AlertTriangle },
+    { title: "Forbidden", url: "/errors/forbidden", group: "Lỗi", icon: AlertTriangle },
+    { title: "Not Found", url: "/errors/not-found", group: "Lỗi", icon: AlertTriangle },
+    { title: "Internal Server Error", url: "/errors/internal-server-error", group: "Lỗi", icon: AlertTriangle },
+    { title: "Under Maintenance", url: "/errors/under-maintenance", group: "Lỗi", icon: AlertTriangle },
 
-    // Settings
-    { title: "User Settings", url: "/settings/user", group: "Settings", icon: User },
-    { title: "Account Settings", url: "/settings/account", group: "Settings", icon: Settings },
-    { title: "Appearance", url: "/settings/appearance", group: "Settings", icon: Palette },
+    // Cài đặt
+    { title: "Người dùng", url: "/settings/user", group: "Cài đặt", icon: User },
+    { title: "Tài khoản", url: "/settings/account", group: "Cài đặt", icon: Settings },
+    { title: "Giao diện", url: "/settings/appearance", group: "Cài đặt", icon: Palette },
   ]
 
   const groupedItems = searchItems.reduce((acc, item) => {
@@ -159,12 +159,12 @@ export function CommandSearch({ open, onOpenChange }: CommandSearchProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="overflow-hidden p-0 shadow-2xl border border-zinc-200 dark:border-zinc-800 max-w-[640px]">
-        <DialogTitle className="sr-only">Command Search</DialogTitle>
+        <DialogTitle className="sr-only">Tìm kiếm</DialogTitle>
         <Command
           ref={commandRef}
           className="transition-transform duration-100 ease-out"
         >
-          <CommandInput placeholder="What do you need?" autoFocus />
+          <CommandInput placeholder="Bạn cần tìm gì?" autoFocus />
           <CommandList>
             <CommandEmpty>No results found.</CommandEmpty>
             {Object.entries(groupedItems).map(([group, items]) => (
@@ -198,8 +198,8 @@ export function SearchTrigger({ onClick }: { onClick: () => void }) {
       className="inline-flex items-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-8 px-3 py-1 relative w-full justify-start text-muted-foreground sm:pr-12 md:w-36 lg:w-56"
     >
       <Search className="mr-2 h-3.5 w-3.5" />
-      <span className="hidden lg:inline-flex">Search...</span>
-      <span className="inline-flex lg:hidden">Search...</span>
+      <span className="hidden lg:inline-flex">Tìm kiếm…</span>
+      <span className="inline-flex lg:hidden">Tìm…</span>
       <kbd className="pointer-events-none absolute right-1.5 top-1.5 hidden h-4 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
         <span className="text-xs">⌘</span>K
       </kbd>

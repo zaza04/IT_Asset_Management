@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Authentication - ShadcnStore",
-  description: "Sign in to your account or create a new one",
+  title: "Đăng nhập - IT Asset Management",
+  description: "Đăng nhập vào hệ thống quản lý tài sản IT",
 };
 
 export default function AuthLayout({

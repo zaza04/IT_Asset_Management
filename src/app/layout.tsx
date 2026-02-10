@@ -8,8 +8,8 @@ import { inter } from "@/lib/fonts";
 import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
-  title: "Shadcn Dashboard",
-  description: "A dashboard built with Next.js and shadcn/ui",
+  title: "IT Asset Management",
+  description: "Quản lý tài sản IT - Device Dashboard",
 };
 
 export default function RootLayout({
@@ -18,7 +18,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.variable} antialiased`}>
+    <html lang="vi" className={`${inter.variable} antialiased`}>
       <body className={inter.className} suppressHydrationWarning={true}>
         <ThemeProvider defaultTheme="system" storageKey="nextjs-ui-theme">
           <SidebarConfigProvider>
