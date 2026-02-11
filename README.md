@@ -1,551 +1,234 @@
-# ShadCN Dashboard + Landing Page Template
+# 🖥️ IT Assets Management — Device Dashboard
 
-[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
-[![GitHub Stars](https://img.shields.io/github/stars/silicondeck/shadcn-dashboard-landing-template?style=social)](https://github.com/silicondeck/shadcn-dashboard-landing-template)
-[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![React](https://img.shields.io/badge/React-20232A?logo=react&logoColor=61DAFB)](https://reactjs.org/)
-[![Vite](https://img.shields.io/badge/Vite-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
-[![Next.js](https://img.shields.io/badge/Next.js-000000?logo=next.js&logoColor=white)](https://nextjs.org/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-
-![Dashboard Preview](vite-version/public/dashboard.png)
-
-
-<div align="center">
-
-🎯 <a href="https://shadcnstore.com/templates/dashboard/shadcn-dashboard-landing-template/dashboard" target="_blank">**View Live Demo**</a> | 🧩 <a href="https://shadcnstore.com/blocks" target="_blank">**Explore Premium Blocks**</a>
-
-</div>
-
-Introducing a sleek, modern, and open-source admin dashboard template built with the latest web technologies, including React + TypeScript + Vite and Next.js + TypeScript. Powered by shadcn/ui v3 and Tailwind CSS v4, this project offers a clean, responsive, and highly customizable UI. Developed and maintained by [ShadcnStore](https://shadcnstore.com), this free and open-source template is designed to accelerate your development process. Whether you're building an admin panel, SaaS dashboard, or launching an AI-driven product, this dashboard provides a beautiful, production-ready interface for your application — complete with a seamless dashboard and a fully-featured landing page to help you hit the ground running.
-
-🚀 **Free & Open Source** by [**ShadcnStore**](https://shadcnstore.com) - Your gateway to premium UI components and templates.
-
+Ứng dụng web quản lý tài sản IT (thiết bị, phần cứng) xây dựng trên **Next.js 16** với giao diện hiện đại, hỗ trợ import dữ liệu từ file Excel, quản lý CRUD đầy đủ, drag-and-drop, undo/redo, và lưu trữ offline trên trình duyệt.
 
 ---
 
-## 🌟 Live Demo
+## ✨ Tính năng chính
 
-Experience the template in action:
-
-- **[🖥️ Dashboard Demo](https://shadcnstore.com/templates/dashboard/shadcn-dashboard-landing-template/dashboard)** - Complete admin dashboard with apps
-- **[🌐 Landing Page Demo](https://shadcnstore.com/templates/dashboard/shadcn-dashboard-landing-template/landing)** - Beautiful marketing landing page
-
-> **Note**: This template includes both a complete dashboard (with mail, tasks, chat, calendar apps) and a marketing landing page in both Vite and Next.js versions.
-
----
-
-## ✨ What's Included
-
-🎯 **Two Complete Templates:**
-
-- **🖥️ Admin Dashboard** - Modern, feature-rich dashboard with 30+ pages
-- **🌐 Landing Page** - Business-ready landing page template
-
-⚡ **Dual Framework Support:**
-
-- **Vite** - Lightning-fast development experience
-- **Next.js 15** - Production-ready with App Router
-
-🎨 **Live Theme Customization:**
-
-- **tweakcn integration** - Real-time theme editing
-- **Built-in customizer** - Preview all possible combinations live
-- **Multiple layouts** - Sidebar variants & collapsible options
+| Tính năng | Mô tả |
+|---|---|
+| 📊 **Dashboard tổng quan** | Biểu đồ thống kê thiết bị, hoạt động gần đây, tổng quan phần cứng |
+| 📥 **Import Excel** | Kéo thả file `.xlsx` — hỗ trợ import nhiều files, chọn sheets trước khi import |
+| ➕ **Tạo thiết bị** | Tạo mới thiết bị thủ công với form nhập thông tin chi tiết |
+| 📋 **Danh sách thiết bị** | Bảng với sắp xếp, tìm kiếm, lọc theo trạng thái, phân trang |
+| 🔍 **Xem chi tiết** | Modal hiển thị thông tin thiết bị với nhiều tab sheet dữ liệu |
+| ✏️ **Chỉnh sửa inline** | Chỉnh sửa trực tiếp dữ liệu trong bảng, thêm/xóa cột và sheet |
+| 🔀 **Drag & Drop** | Kéo thả sắp xếp lại thứ tự các tab sheet |
+| ↩️ **Undo / Redo** | Hoàn tác & làm lại với `Ctrl+Z` / `Ctrl+Y` |
+| ☑️ **Thao tác hàng loạt** | Chọn nhiều thiết bị → đổi trạng thái / xuất file / xóa cùng lúc |
+| 📤 **Xuất Excel** | Xuất dữ liệu thiết bị ngược lại thành file `.xlsx` |
+| 🎨 **Tuỳ chỉnh giao diện** | Dark/Light mode, theme colors, customizer |
+| 💾 **Lưu trữ offline** | Dữ liệu được lưu trên trình duyệt (IndexedDB) — không cần backend |
 
 ---
 
-## 🚀 Key Features
+## 🛠️ Tech Stack
 
-### 📊 **Dashboard Features**
+### Core
 
-- **2 Dashboard Variants** - Overview & Analytics dashboards
-- **App Demos** - Mail, Tasks, Chat, Calendar, Users applications
-- **30+ Pages** - Authentication, Settings, Errors, FAQ, Pricing
-- **Data Tables** - Advanced tables with sorting, filtering, and pagination
-- **Charts & Analytics** - Recharts integration with beautiful visualizations
+| Công nghệ | Phiên bản | Mục đích |
+|---|---|---|
+| [Next.js](https://nextjs.org/) | 16.1.1 | React framework — routing, SSR |
+| [React](https://react.dev/) | 19.2.3 | UI library |
+| [TypeScript](https://www.typescriptlang.org/) | 5.9 | Type safety |
+| [Tailwind CSS](https://tailwindcss.com/) | 4.x | Utility-first CSS |
 
-### 🎨 **Design & Theming**
+### UI Components
 
-- **Live Theme Customizer** - Real-time color and layout switching
-- **tweakcn Integration** - Professional theme management
-- **Multiple Layouts** - Sidebar variants, collapsible navigation
-- **Responsive Design** - Mobile-first approach with container queries
-- **Dark/Light Mode** - Seamless theme switching
+| Thư viện | Mục đích |
+|---|---|
+| [shadcn/ui](https://ui.shadcn.com/) (Radix UI) | Hệ thống component chính (Dialog, Dropdown, Table, Tabs, …) |
+| [Lucide React](https://lucide.dev/) | Icon library |
+| [Recharts](https://recharts.org/) | Biểu đồ thống kê |
+| [Embla Carousel](https://www.embla-carousel.com/) | Carousel cho sheet tabs |
+| [cmdk](https://cmdk.paco.me/) | Command palette / tìm kiếm nhanh |
+| [Sonner](https://sonner.emilkowal.dev/) | Toast notifications |
 
-### ⚡ **Developer Experience**
+### State & Data
 
-- **Modern Tech Stack** - React 19, TypeScript, Tailwind CSS v4
-- **Cross-Platform** - Works with both Vite and Next.js
-- **Type Safety** - Full TypeScript support throughout
-- **Component Library** - Latest shadcn/ui v3 with Radix UI
-- **Easy Customization** - Well-structured, modular codebase
+| Thư viện | Mục đích |
+|---|---|
+| [Zustand](https://zustand.docs.pmnd.rs/) | Quản lý state toàn cục |
+| [Zundo](https://github.com/charkour/zundo) | Undo/Redo middleware cho Zustand |
+| [idb-keyval](https://github.com/nicedoc/idb-keyval) | Lưu trữ dữ liệu trên IndexedDB |
+| [SheetJS (xlsx)](https://sheetjs.com/) | Đọc/ghi file Excel |
+| [@tanstack/react-table](https://tanstack.com/table) | Bảng dữ liệu nâng cao (sort, filter, pagination) |
+| [@tanstack/react-virtual](https://tanstack.com/virtual) | Virtualized rendering cho bảng lớn |
+
+### Interactions
+
+| Thư viện | Mục đích |
+|---|---|
+| [@dnd-kit](https://dndkit.com/) | Drag-and-drop (sắp xếp tabs) |
+| [react-dropzone](https://react-dropzone.js.org/) | Kéo thả file upload |
+| [react-resizable-panels](https://github.com/bvaughn/react-resizable-panels) | Panels có thể resize |
+| [React Hook Form](https://react-hook-form.com/) + [Zod](https://zod.dev/) | Form validation |
+| [next-themes](https://github.com/pacocoursey/next-themes) | Dark/Light mode |
 
 ---
 
-## 🏗️ Project Structure
+## 📁 Cấu trúc dự án
 
-```text
-📁 shadcn-dashboard/
-├── 📁 vite-version/              # Vite + React version
-│   ├── 📁 src/
-│   │   ├── 📁 app/               # Demo pages & applications
-│   │   │   ├── 📁 dashboard/     # Dashboard variants
-│   │   │   ├── 📁 dashboard-2/   # Alternative dashboard layout
-│   │   │   ├── 📁 landing/       # Landing page template
-│   │   │   ├── 📁 auth/          # Authentication pages
-│   │   │   ├── 📁 mail/          # Email application demo
-│   │   │   ├── 📁 tasks/         # Task management demo
-│   │   │   ├── 📁 chat/          # Chat application demo
-│   │   │   ├── 📁 calendar/      # Calendar demo
-│   │   │   ├── 📁 settings/      # User settings pages
-│   │   │   ├── 📁 errors/        # Error pages (404, 500, etc.)
-│   │   │   ├── 📁 users/         # User management pages
-│   │   │   ├── 📁 faqs/          # FAQ pages
-│   │   │   └── 📁 pricing/       # Pricing pages
-│   │   ├── 📁 components/        # UI components
-│   │   │   ├── 📁 ui/            # shadcn/ui v3 components
-│   │   │   ├── 📁 layouts/       # Layout components
-│   │   │   └── 📁 theme-customizer/ # Live theme editor
-│   │   ├── 📁 hooks/             # Custom React hooks
-│   │   ├── 📁 lib/               # Utilities & configurations
-│   │   └── 📁 types/             # TypeScript type definitions
-│   └── 📄 package.json           # Vite dependencies
-│
-├── 📁 nextjs-version/            # Next.js 15 version
-│   ├── 📁 src/
-│   │   ├── 📁 app/               # App Router with route groups
-│   │   │   ├── 📁 (auth)/        # Authentication route group
-│   │   │   │   ├── 📁 login/     # Login pages
-│   │   │   │   ├── 📁 signup/    # Registration pages
-│   │   │   │   ├── 📁 forgot-password/ # Password recovery
-│   │   │   │   └── 📁 errors/    # Error pages (404, 500, etc.)
-│   │   │   ├── 📁 (dashboard)/   # Dashboard route group
-│   │   │   │   ├── 📁 dashboard/ # Main dashboard
-│   │   │   │   ├── 📁 dashboard-2/ # Alternative dashboard
-│   │   │   │   ├── 📁 mail/      # Email application
-│   │   │   │   ├── 📁 tasks/     # Task management
-│   │   │   │   ├── 📁 chat/      # Chat application
-│   │   │   │   ├── 📁 calendar/  # Calendar demo
-│   │   │   │   ├── 📁 settings/  # User settings
-│   │   │   │   ├── 📁 users/     # User management
-│   │   │   │   ├── 📁 faqs/      # FAQ pages
-│   │   │   │   ├── 📁 pricing/   # Pricing pages
-│   │   │   │   └── 📄 layout.tsx # Dashboard layout
-│   │   │   ├── 📁 landing/       # Landing page template
-│   │   │   ├── 📄 layout.tsx     # Root layout
-│   │   │   ├── 📄 loading.tsx    # Global loading component
-│   │   │   ├── 📄 not-found.tsx  # 404 page
-│   │   │   └── 📄 page.tsx       # Homepage
-│   │   ├── 📁 components/        # Same component structure as Vite
-│   │   ├── 📁 hooks/             # Custom React hooks
-│   │   ├── 📁 lib/               # Utilities & configurations
-│   │   └── 📁 types/             # TypeScript type definitions
-│   └── 📄 package.json           # Next.js dependencies
-│
-├── 📄 README.md                  # This file
-└── 📄 LICENSE                    # MIT License
+```
+device-dashboard/
+├── public/                  # Static assets
+├── src/
+│   ├── app/
+│   │   ├── (auth)/          # Trang đăng nhập / đăng ký
+│   │   ├── (dashboard)/
+│   │   │   ├── dashboard/   # Trang tổng quan
+│   │   │   ├── devices/     # Quản lý thiết bị (CRUD)
+│   │   │   ├── settings/    # Cài đặt (Appearance, Account, User)
+│   │   │   └── layout.tsx   # Layout chung (Sidebar + Header)
+│   │   ├── globals.css      # CSS variables, Tailwind config
+│   │   └── layout.tsx       # Root layout
+│   ├── components/
+│   │   ├── dashboard/       # Components chính
+│   │   │   ├── DeviceList.tsx          # Bảng danh sách thiết bị
+│   │   │   ├── DeviceDetail.tsx        # Modal chi tiết / chỉnh sửa
+│   │   │   ├── ImportDevice.tsx        # Kéo thả import file
+│   │   │   ├── SheetTable.tsx          # Bảng dữ liệu sheet
+│   │   │   ├── SheetSelectionDialog.tsx # Chọn sheets khi import
+│   │   │   ├── CreateDeviceDialog.tsx  # Dialog tạo thiết bị mới
+│   │   │   ├── HardwareOverview.tsx    # Card tổng quan phần cứng
+│   │   │   └── RecentActivity.tsx      # Hoạt động gần đây
+│   │   ├── ui/              # shadcn/ui components (41 files)
+│   │   ├── carousel/        # Sheet tabs carousel
+│   │   └── theme-customizer/ # Theme customization
+│   ├── stores/              # Zustand stores
+│   │   ├── useDeviceStore.ts   # Device state + undo/redo
+│   │   └── useAppearanceStore.ts # Theme settings
+│   ├── hooks/               # Custom React hooks
+│   ├── types/               # TypeScript type definitions
+│   ├── lib/                 # Utility functions
+│   ├── config/              # App configuration
+│   ├── contexts/            # React contexts
+│   └── utils/               # Helper utilities
+├── package.json
+├── tsconfig.json
+├── next.config.ts
+├── tailwind.config.ts
+└── README.md
 ```
 
 ---
 
-## � Quick Start
+## 🚀 Bắt đầu
 
-### Prerequisites
+### Yêu cầu
 
-- **Node.js** 18+
-- **pnpm** (recommended) or npm
+- **Node.js** >= 18.x ([tải tại đây](https://nodejs.org/))
+- **npm** (đi kèm Node.js) hoặc **pnpm** / **yarn**
 
-### 1. Clone the Repository
+### Cài đặt
 
 ```bash
-git clone https://github.com/silicondeck/shadcn-dashboard-landing-template
-cd shadcn-dashboard
+# Clone repository
+git clone <repository-url>
+cd device-dashboard
+
+# Cài đặt dependencies
+npm install
 ```
 
-### 2. Choose Your Framework
-
-#### 🔥 **Vite Version** (Recommended for Development)
+### Chạy Development Server
 
 ```bash
-cd vite-version
-pnpm install
-pnpm dev
+npm run dev
 ```
 
-**Access at:** `http://localhost:5173`
+Mở trình duyệt tại [http://localhost:3000](http://localhost:3000).
 
-#### ⚡ **Next.js Version** (Production-Ready)
+### Build Production
 
 ```bash
-cd nextjs-version
-pnpm install
-pnpm dev
+# Build
+npm run build
+
+# Chạy production server
+npm start
 ```
 
-**Access at:** `http://localhost:3000`
-
-### 3. Start Building
-
-- **Dashboard:** Navigate to [/dashboard](https://shadcnstore.com/templates/dashboard/shadcn-dashboard-landing-template/dashboard) or [/dashboard-2](https://shadcnstore.com/templates/dashboard/shadcn-dashboard-landing-template/dashboard-2)
-- **Landing Page:** Visit [/landing](https://shadcnstore.com/templates/dashboard/shadcn-dashboard-landing-template/landing) for the business template
-- **Theme Customizer:** Use the built-in customizer to preview themes live
-- **Apps:** Explore [Mail](https://shadcnstore.com/templates/dashboard/shadcn-dashboard-landing-template/mail), [Tasks](https://shadcnstore.com/templates/dashboard/shadcn-dashboard-landing-template/tasks), [Chat](https://shadcnstore.com/templates/dashboard/shadcn-dashboard-landing-template/chat), [Calendar](https://shadcnstore.com/templates/dashboard/shadcn-dashboard-landing-template/calendar), [Users](https://shadcnstore.com/templates/dashboard/shadcn-dashboard-landing-template/users)
-- **Authentication:** Check out [Signin](https://shadcnstore.com/templates/dashboard/shadcn-dashboard-landing-template/auth/sign-in), [Signup](https://shadcnstore.com/templates/dashboard/shadcn-dashboard-landing-template/auth/sign-up), [Forgot Password](https://shadcnstore.com/templates/dashboard/shadcn-dashboard-landing-template/auth/forgot-password)
-- **Settings:** Visit [Account](https://shadcnstore.com/templates/dashboard/shadcn-dashboard-landing-template/settings/account), [Appearance](https://shadcnstore.com/templates/dashboard/shadcn-dashboard-landing-template/settings/appearance), [Billing](https://shadcnstore.com/templates/dashboard/shadcn-dashboard-landing-template/settings/billing)
-
----
-
-## 🛠️ Development Commands
-
-### Vite Version
+### Lint
 
 ```bash
-pnpm dev          # Start development server
-pnpm build        # Build for production
-pnpm preview      # Preview production build
-pnpm lint         # Run ESLint
-```
-
-### Next.js Version
-
-```bash
-pnpm dev          # Start development server
-pnpm build        # Build for production
-pnpm start        # Start production server
-pnpm lint         # Run Next.js linter
+npm run lint
 ```
 
 ---
 
-## 🎨 Theme Customization
+## 📖 Hướng dẫn sử dụng
 
-### **Live Theme Customizer**
+### Import thiết bị từ Excel
 
-This template includes a powerful **live theme customizer** powered by **tweakcn**:
+1. Vào trang **Thiết bị** → bấm **Import Excel**
+2. Kéo thả file `.xlsx` vào vùng upload (hỗ trợ nhiều files)
+3. Chọn sheets muốn import → bấm **Xác nhận**
+4. Thiết bị sẽ xuất hiện trong danh sách
 
-![Customizer Preview](vite-version/public/customizer.png)
+### Quản lý thiết bị
 
-1. **Open the customizer** - Click the theme customizer button
-2. **Choose colors** - Pick from preset themes or create custom palettes
-3. **Layout options** - Switch between sidebar variants and layouts
-4. **Real-time preview** - See changes instantly across all components
-5. **Export themes** - Save your custom themes for production use
+- **Xem chi tiết**: Click vào dòng trong bảng hoặc menu `⋯` → Xem chi tiết
+- **Chỉnh sửa**: Menu `⋯` → Chỉnh sửa (mở edit mode trực tiếp)
+- **Xuất file**: Menu `⋯` → Xuất file (tải xuống `.xlsx`)
+- **Xóa**: Menu `⋯` → Xóa (hiển thị xác nhận trước khi xóa)
 
-### **Built-in Themes**
+### Thao tác hàng loạt
 
-- 🌊 **Default** - Clean blue theme
-- 🌙 **Dark** - Professional dark theme
-- 🌸 **Rose** - Warm pink accents
-- 🌿 **Green** - Fresh green palette
-- 🌅 **Orange** - Vibrant orange theme
-- 🔴 **Red** - Bold red accents
-- 💜 **Violet** - Modern purple theme
+1. Tick checkbox nhiều thiết bị
+2. Toolbar xuất hiện → Đổi trạng thái / Xuất file / Xóa
 
-### **Custom Theme Creation**
+### Chỉnh sửa nâng cao
 
-#### **Adding Custom Themes to the Customizer**
-To add your own custom themes to the live customizer, create theme objects in your theme configuration:
+- Trong edit mode: chỉnh sửa trực tiếp ô dữ liệu
+- Kéo thả icon ⋮⋮ để sắp xếp thứ tự tabs
+- Thêm sheet mới, thêm/xóa cột
+- Bấm **Lưu** để lưu và đóng modal
 
-```typescript
-// src/config/theme-data.ts (or similar file)
-export const customTheme = {
-  name: "Custom Brand",
-  cssVars: {
-    light: {
-      primary: "210 100% 50%",
-      "primary-foreground": "0 0% 98%",
-      secondary: "210 100% 95%",
-      "secondary-foreground": "210 100% 20%",
-      accent: "210 100% 90%",
-      "accent-foreground": "210 100% 15%",
-      // Add more color variables as needed
-    },
-    dark: {
-      primary: "210 100% 60%",
-      "primary-foreground": "210 100% 15%",
-      // Dark mode variants
-    }
-  }
-}
-```
+### Undo / Redo
 
-#### **Manual CSS Variable Customization**
-To directly modify theme colors, update your CSS variables in `globals.css` or `index.css`:
-
-```css
-:root {
-  --primary: oklch(0.5 0.2 240);
-  --primary-foreground: oklch(0.98 0.02 240);
-  --secondary: oklch(0.96 0.01 240);
-  --secondary-foreground: oklch(0.2 0.02 240);
-  /* Customize other variables */
-}
-
-.dark {
-  --primary: oklch(0.7 0.2 240);
-  --primary-foreground: oklch(0.15 0.02 240);
-  /* Dark mode variants */
-}
-```
-
-### **Removing the Theme Customizer**
-
-If you want to remove the theme customizer from your project:
-
-#### **Vite Version:**
-1. Remove the theme customizer component: `src/components/theme-customizer.tsx`
-2. Remove the theme customizer button from your layout
-3. Remove theme-related imports from your main layout file
-4. Delete the `src/components/theme-customizer/` folder if it exists
-
-#### **Next.js Version:**
-1. Remove the theme customizer component: `src/components/theme-customizer.tsx`
-2. Remove the theme customizer button from `src/app/layout.tsx`
-3. Remove theme-related imports from your layout files
-4. Delete the `src/components/theme-customizer/` folder if it exists
-
-> 📖 **Learn More:** For comprehensive theming documentation, visit the [official shadcn/ui theming guide](https://ui.shadcn.com/docs/theming) which covers CSS variables, color formats, and advanced customization techniques.
+- `Ctrl + Z` — Hoàn tác
+- `Ctrl + Y` — Làm lại
+- Hoặc sử dụng nút ↩️ ↪️ trên toolbar
 
 ---
 
-## 📦 Tech Stack
+## 📝 Scripts
 
-### **Core Framework**
-
-- **React 19** - Latest React with concurrent features
-- **TypeScript** - Full type safety
-- **Vite** - Ultra-fast development
-- **Next.js 15** - Production-ready with App Router
-
-### **UI & Styling**
-
-- **shadcn/ui v3** - Latest component library
-- **Radix UI** - Accessible primitives
-- **Tailwind CSS v4** - Utility-first styling
-- **tweakcn** - Advanced theme management
-- **Lucide React** - Beautiful icons
-
-### **State & Data**
-
-- **Zustand** - Lightweight state management
-- **React Hook Form** - Forms with validation
-- **Zod** - Schema validation
-- **TanStack Table** - Advanced data tables
-
-### **Development**
-
-- **ESLint** - Code linting
-- **Prettier** - Code formatting
-- **TypeScript** - Static type checking
+| Script | Lệnh | Mô tả |
+|---|---|---|
+| Dev | `npm run dev` | Chạy development server (hot reload) |
+| Build | `npm run build` | Build production bundle |
+| Start | `npm start` | Chạy production server |
+| Lint | `npm run lint` | Kiểm tra lỗi code với ESLint |
 
 ---
 
-## 📋 What's Included
+## 🗄️ Lưu trữ dữ liệu
 
-### **🖥️ Dashboard Pages**
+Ứng dụng sử dụng **IndexedDB** (thông qua `idb-keyval`) để lưu trữ dữ liệu trực tiếp trên trình duyệt:
 
-- **Dashboard** - Overview with analytics cards and charts
-- **Dashboard v2** - Alternative dashboard with different metrics
-
-### **📱 Application Demos**
-
-![Apps Preview](vite-version/public/apps.png)
-
-- **📧 Mail** - Complete email interface (Inbox, Read, Compose)
-- **✅ Tasks** - Task management with drag & drop
-- **💬 Chat** - Real-time chat interface
-- **📅 Calendar** - Event scheduling and management
-- **👥 Users** - User management and profiles with advanced tables
-
-### **🔐 Authentication**
-
-- **Login** - 3 login page variants with different layouts
-- **Sign Up** - 3 registration page variants with different designs  
-- **Forgot Password** - 3 password recovery page variants
-
-### **⚙️ Settings & Profile**
-
-- **User Settings** - Manage your personal information and preferences
-- **Account Settings** - Profile management
-- **Plans & Billing** - Subscription and payment pages
-- **Appearance** - Theme and display preferences
-- **Notifications** - Notification preferences
-- **Connections** - Social media integrations
-
-### **❌ Error Pages**
-
-- **404** - Page not found
-- **401** - Unauthorized access
-- **403** - Forbidden
-- **500** - Internal server error
-- **Under Maintenance** - Maintenance mode page
-
-### **🌐 Landing Page Template**
-
-- **Hero Section** - Compelling headlines and CTAs
-- **About Section** - Company/product introduction with interactive elements
-- **Features Section** - Product/service highlights with icons
-- **Stats Section** - Key metrics and achievements display
-- **Logo Carousel** - Partner/client logos showcase
-- **Team Section** - Team member profiles and information
-- **Testimonials Section** - Customer reviews and social proof
-- **Blog Section** - Latest blog posts and articles
-- **Pricing Section** - Pricing tables and plans
-- **FAQ Section** - Frequently asked questions with expandable answers
-- **Contact Section** - Contact forms and information
-- **CTA Section** - Call-to-action components
-- **Navigation & Footer** - Complete navigation and footer components
-- **Theme Customizer** - Live theme switching for landing page
-
-### **📄 Additional Pages**
-
-- **FAQ** - Frequently asked questions
-- **Pricing** - Detailed pricing pages
-
----
-
-## 🌟 Why Choose This Template?
-
-### **🆓 Completely Free & Open Source**
-
-- **MIT Licensed** - Use for personal and commercial projects
-- **No restrictions** - Modify, distribute, and sell
-- **Community driven** - Contributions welcome
-
-### **🏢 Business Ready**
-
-- **Production code** - Clean, maintainable, and scalable
-- **Professional design** - Modern UI that looks great
-- **Complete templates** - Dashboard + Landing page included
-
-### **🎨 Advanced Theming**
-
-- **Live customization** - See changes in real-time
-- **tweakcn integration** - Professional theme management
-- **Multiple layouts** - Sidebar variants and options
-
-### **⚡ Developer Friendly**
-
-- **Modern stack** - Latest React, TypeScript, Tailwind CSS
-- **Great DX** - Fast development with Vite
-- **Type safe** - Full TypeScript coverage
-- **Well documented** - Clear code and comments
-
----
-
-## 🚀 Take It Further with ShadcnStore
-
-This free template is just the beginning! **ShadcnStore** offers a complete ecosystem of free & premium UI components, dashboards and templates to accelerate your development:
-
-### **🎁 Available Now**
-
-- **[Premium Blocks](https://shadcnstore.com/blocks)** - 150+ production-ready UI blocks
-  - **Application Blocks** - Advanced dashboard components
-  - **Marketing Blocks** - Landing page sections
-  - **E-commerce Blocks** - Online store components
-  - **Free Blocks** - No-cost starter components
-
-### **🔜 Coming Soon**
-
-- **Premium Templates** - Complete application templates
-- **Landing Page Collection** - Business-ready landing pages
-- **Premium Dashboards** - Advanced dashboard solutions
-
-### **💡 Perfect For**
-
-- **SaaS Applications** - Complete dashboard solutions
-- **Marketing Sites** - Beautiful landing pages
-- **E-commerce** - Online store interfaces
-- **Internal Tools** - Admin panels and dashboards
-
-> **🎯 [Explore ShadcnStore](https://shadcnstore.com)** - Premium blocks, dashboards and templates for modern web applications.
-
----
-
-## 🤝 Contributing
-
-We welcome contributions! Here's how you can help:
-
-### **Ways to Contribute**
-
-- 🐛 **Report bugs** - Found an issue? Let us know!
-- 💡 **Suggest features** - Have ideas for improvements?
-- 🔧 **Submit PRs** - Fix bugs or add new features
-- 📖 **Improve docs** - Help make documentation better
-- ⭐ **Star the repo** - Show your support!
-
-### **Getting Started**
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b my-feature`
-3. Make your changes and test thoroughly
-4. Commit: `git commit -m "Add new feature"`
-5. Push: `git push origin my-feature`
-6. Open a Pull Request
-
-### **Code Style**
-
-- Use **TypeScript** for all new code
-- Follow **ESLint** and **Prettier** configurations
-- Add **type definitions** for props and data
-- Write **clear commit messages**
-- Test your changes in both **Vite** and **Next.js** versions
+- ✅ **Không cần backend** — hoạt động hoàn toàn offline
+- ✅ **Dữ liệu persist** — vẫn còn sau khi refresh trang
+- ⚠️ **Lưu ý**: Dữ liệu chỉ tồn tại trên trình duyệt hiện tại. Xoá cache trình duyệt sẽ mất dữ liệu.
 
 ---
 
 ## 📄 License
 
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
-
-**You are free to:**
-
-- ✅ Use commercially
-- ✅ Modify and distribute
-- ✅ Include in private projects
-- ✅ Sell products built with this template
-
-**Attribution to [ShadcnStore](https://shadcnstore.com) is appreciated but not required.**
+Dự án được phân phối theo giấy phép [MIT](./License.md).
 
 ---
 
-## 🙏 Credits & Acknowledgments
+## 🤝 Đóng góp
 
-This template is built on the shoulders of amazing open-source projects:
-
-- **[shadcn/ui](https://ui.shadcn.com)** - Beautiful and accessible components
-- **[Radix UI](https://www.radix-ui.com)** - Low-level accessible primitives
-- **[Tailwind CSS](https://tailwindcss.com)** - Utility-first CSS framework
-- **[Lucide Icons](https://lucide.dev)** - Beautiful & consistent icons
-- **[tweakcn](https://tweakcn.com)** - Advanced theme customization
-- **[Recharts](https://recharts.org)** - Composable charting library
-- **[TanStack Table](https://tanstack.com/table)** - Powerful data tables
+1. Fork repository
+2. Tạo branch mới: `git checkout -b feature/ten-tinh-nang`
+3. Commit changes: `git commit -m "feat: thêm tính năng mới"`
+4. Push branch: `git push origin feature/ten-tinh-nang`
+5. Tạo Pull Request
 
 ---
 
-## 📞 Support & Community
-
-### **Get Help**
-
-- 📖 **Documentation** - This README covers everything
-- 🐛 **Issues** - [Report bugs](https://github.com/silicondeck/shadcn-dashboard-landing-template/issues)
-- 💬 **Discussions** - [Join conversations](https://github.com/silicondeck/shadcn-dashboard-landing-template/discussions)
-
-### **Stay Connected**
-
-- 🌐 **Website** - [ShadcnStore.com](https://shadcnstore.com)
-- 🐦 **Twitter** - [@shadcnstore](https://twitter.com/shadcnstore)
-- 💬 **Discord** - [Join our server](https://discord.com/invite/XEQhPc9a6p)
-- 📧 **Email** - [hello@shadcnstore.com](mailto:hello@shadcnstore.com)
-
----
-
-<div align="center">
-
-**⭐ Star this repo if it helped you!**
-
-[![ShadcnStore](https://img.shields.io/badge/Built%20by-ShadcnStore-blue?style=for-the-badge)](https://shadcnstore.com)
-
-_A free & open-source template by **[ShadcnStore](https://shadcnstore.com)** - Premium UI components, dashboards and templates for modern web development._
-
-</div>
+> **Note:** Dự án đang trong giai đoạn phát triển. Mọi đóng góp và góp ý đều được chào đón!
