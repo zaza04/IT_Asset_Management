@@ -125,7 +125,7 @@ device-dashboard/
 
 ```bash
 # Clone repository
-git clone <https://github.com/zaza04/IT_Asset_Management.git>
+git clone https://github.com/zaza04/IT_Asset_Management.git
 cd device-dashboard
 
 # Cài đặt dependencies
