@@ -19,10 +19,13 @@ export default function HomePage() {
     }
   }, [isAuthenticated, isLoading, router])
 
-  // Show loading while checking auth
+  // Show loading skeleton while checking auth
   return (
     <div className="flex h-screen items-center justify-center">
-      <div className="text-muted-foreground">Loading...</div>
+      <div className="space-y-4 text-center">
+        <div className="h-12 w-12 rounded-full bg-muted animate-pulse mx-auto" />
+        <div className="h-4 w-32 bg-muted animate-pulse mx-auto" />
+      </div>
     </div>
   )
 }

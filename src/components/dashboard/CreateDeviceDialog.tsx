@@ -48,25 +48,32 @@ const INITIAL_FORM: FormData = {
 
 export function CreateDeviceDialog({ isOpen, onClose, onCreated }: CreateDeviceDialogProps) {
     const [form, setForm] = useState<FormData>(INITIAL_FORM);
+    const [isCreating, setIsCreating] = useState(false);
     const createDevice = useDeviceStore((s) => s.createDevice);
 
     const updateField = (field: keyof FormData, value: string) => {
         setForm((prev) => ({ ...prev, [field]: value }));
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!form.name.trim()) return;
-        const device = createDevice({
-            name: form.name, os: form.os, cpu: form.cpu, ram: form.ram,
-            architecture: form.architecture, ip: form.ip, mac: form.mac,
-        });
-        // Set status nếu khác default
-        if (form.status !== 'active') {
-            useDeviceStore.getState().setDeviceStatus(device.id, form.status);
+
+        setIsCreating(true);
+        try {
+            const device = createDevice({
+                name: form.name, os: form.os, cpu: form.cpu, ram: form.ram,
+                architecture: form.architecture, ip: form.ip, mac: form.mac,
+            });
+            // Set status nếu khác default
+            if (form.status !== 'active') {
+                useDeviceStore.getState().setDeviceStatus(device.id, form.status);
+            }
+            setForm(INITIAL_FORM);
+            onClose();
+            onCreated?.(device.id);
+        } finally {
+            setIsCreating(false);
         }
-        setForm(INITIAL_FORM);
-        onClose();
-        onCreated?.(device.id);
     };
 
     const handleOpenChange = (open: boolean) => {
@@ -95,10 +102,13 @@ export function CreateDeviceDialog({ isOpen, onClose, onCreated }: CreateDeviceD
                         </Label>
                         <Input
                             id="device-name"
+                            name="deviceName"
+                            type="text"
                             placeholder="VD: PC-IT-001"
                             value={form.name}
                             onChange={(e) => updateField('name', e.target.value)}
-                            autoFocus
+                            autoComplete="off"
+                            autoFocus={typeof window !== 'undefined' && !/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)}
                         />
                     </div>
 
@@ -111,18 +121,24 @@ export function CreateDeviceDialog({ isOpen, onClose, onCreated }: CreateDeviceD
                             </Label>
                             <Input
                                 id="device-os"
+                                name="deviceOs"
+                                type="text"
                                 placeholder="Windows 11 Pro"
                                 value={form.os}
                                 onChange={(e) => updateField('os', e.target.value)}
+                                autoComplete="off"
                             />
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="device-arch">Architecture</Label>
                             <Input
                                 id="device-arch"
+                                name="deviceArchitecture"
+                                type="text"
                                 placeholder="x64"
                                 value={form.architecture}
                                 onChange={(e) => updateField('architecture', e.target.value)}
+                                autoComplete="off"
                             />
                         </div>
                     </div>
@@ -136,9 +152,12 @@ export function CreateDeviceDialog({ isOpen, onClose, onCreated }: CreateDeviceD
                             </Label>
                             <Input
                                 id="device-cpu"
+                                name="deviceCpu"
+                                type="text"
                                 placeholder="Intel i5-12400"
                                 value={form.cpu}
                                 onChange={(e) => updateField('cpu', e.target.value)}
+                                autoComplete="off"
                             />
                         </div>
                         <div className="grid gap-2">
@@ -148,9 +167,12 @@ export function CreateDeviceDialog({ isOpen, onClose, onCreated }: CreateDeviceD
                             </Label>
                             <Input
                                 id="device-ram"
+                                name="deviceRam"
+                                type="text"
                                 placeholder="16 GB"
                                 value={form.ram}
                                 onChange={(e) => updateField('ram', e.target.value)}
+                                autoComplete="off"
                             />
                         </div>
                     </div>
@@ -164,18 +186,24 @@ export function CreateDeviceDialog({ isOpen, onClose, onCreated }: CreateDeviceD
                             </Label>
                             <Input
                                 id="device-ip"
+                                name="deviceIp"
+                                type="text"
                                 placeholder="192.168.1.100"
                                 value={form.ip}
                                 onChange={(e) => updateField('ip', e.target.value)}
+                                autoComplete="off"
                             />
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="device-mac">MAC</Label>
                             <Input
                                 id="device-mac"
+                                name="deviceMac"
+                                type="text"
                                 placeholder="AA:BB:CC:DD:EE:FF"
                                 value={form.mac}
                                 onChange={(e) => updateField('mac', e.target.value)}
+                                autoComplete="off"
                             />
                         </div>
                     </div>
@@ -199,11 +227,12 @@ export function CreateDeviceDialog({ isOpen, onClose, onCreated }: CreateDeviceD
                 </div>
 
                 <DialogFooter>
-                    <Button variant="outline" onClick={() => handleOpenChange(false)}>
+                    <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={isCreating}>
                         Hủy
                     </Button>
-                    <Button onClick={handleSubmit} disabled={!form.name.trim()}>
-                        Tạo thiết bị
+                    <Button onClick={handleSubmit} disabled={!form.name.trim() || isCreating}>
+                        {isCreating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        {isCreating ? 'Đang tạo…' : 'Tạo thiết bị'}
                     </Button>
                 </DialogFooter>
             </DialogContent>

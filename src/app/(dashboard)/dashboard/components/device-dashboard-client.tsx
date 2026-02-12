@@ -51,6 +51,9 @@ export function DeviceDashboardClient() {
 
   return (
     <div className="@container/main flex flex-1 flex-col gap-4 p-4 lg:px-6">
+      {/* Visually hidden h1 for screen readers */}
+      <h1 className="sr-only">Device Management Dashboard</h1>
+
       {/* Row 1 — Stats Cards (4 cột) */}
       <SectionCards devices={devices} />
 

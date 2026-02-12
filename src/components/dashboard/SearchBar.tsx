@@ -24,12 +24,14 @@ export function SearchBar({ value, onChange, placeholder = "Search by name / ID.
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
                 type="text"
+                name="search"
                 placeholder={placeholder}
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
                 onFocus={() => setIsFocused(true)}
                 onBlur={() => setIsFocused(false)}
                 className="pl-9 pr-9"
+                autoComplete="off"
             />
             {value && (
                 <Button

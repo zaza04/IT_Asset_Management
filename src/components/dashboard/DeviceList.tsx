@@ -364,6 +364,8 @@ export function DeviceList({
                                 table.getRowModel().rows.map((row) => (
                                     <TableRow
                                         key={row.id}
+                                        role="row"
+                                        aria-label={`Device ${row.original.deviceInfo.name}, Status ${row.original.status}, IP ${row.original.deviceInfo.ip || 'Not set'}, OS ${row.original.deviceInfo.os}`}
                                         className="cursor-pointer hover:bg-muted/50"
                                         onClick={(e) => {
                                             // Không mở view modal khi click vào actions column hoặc checkbox

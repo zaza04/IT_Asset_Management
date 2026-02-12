@@ -26,6 +26,14 @@ export default function DashboardLayout({
     >
       {config.side === "left" ? (
         <>
+          {/* Skip link for keyboard navigation */}
+          <a
+            href="#main-content"
+            className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:shadow-lg"
+          >
+            Skip to main content
+          </a>
+
           <AppSidebar
             variant={config.variant}
             collapsible={config.collapsible}
@@ -35,7 +43,7 @@ export default function DashboardLayout({
             <SiteHeader />
             <div className="flex flex-1 flex-col">
               <div className="@container/main flex flex-1 flex-col gap-2">
-                <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+                <div id="main-content" className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
                   {children}
                 </div>
               </div>
@@ -45,11 +53,19 @@ export default function DashboardLayout({
         </>
       ) : (
         <>
+          {/* Skip link for keyboard navigation */}
+          <a
+            href="#main-content"
+            className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:shadow-lg"
+          >
+            Skip to main content
+          </a>
+
           <SidebarInset>
             <SiteHeader />
             <div className="flex flex-1 flex-col">
               <div className="@container/main flex flex-1 flex-col gap-2">
-                <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+                <div id="main-content" className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
                   {children}
                 </div>
               </div>

@@ -6,6 +6,7 @@ import { SidebarConfigProvider } from "@/contexts/sidebar-context";
 import { inter } from "@/lib/fonts";
 
 import { Toaster } from "@/components/ui/sonner";
+import { CommandPalette } from "@/components/CommandPalette";
 
 export const metadata: Metadata = {
   title: "IT Asset Management",
@@ -20,12 +21,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="vi" className={`${inter.variable} antialiased`}>
+    <html
+      lang="vi"
+      className={`${inter.variable} antialiased`}
+      style={{ colorScheme: 'light dark' }}
+    >
       <body className={inter.className} suppressHydrationWarning={true}>
         <ThemeProvider defaultTheme="system" storageKey="nextjs-ui-theme">
           <AuthProvider>
             <SidebarConfigProvider>
               {children}
+              <CommandPalette />
               <Toaster />
             </SidebarConfigProvider>
           </AuthProvider>

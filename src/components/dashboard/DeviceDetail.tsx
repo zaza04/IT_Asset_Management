@@ -246,9 +246,12 @@ export function DeviceDetail({
                                 </div>
                                 {isEditing ? (
                                     <Input
+                                        name="deviceName"
+                                        type="text"
                                         value={editForm.name ?? ''}
                                         onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))}
                                         className="text-base font-bold h-8"
+                                        autoComplete="off"
                                     />
                                 ) : (
                                     <h2 className="text-base font-bold leading-snug break-words">
@@ -430,11 +433,14 @@ export function DeviceDetail({
                                                         }}
                                                     >
                                                         <Input
+                                                            name="newSheetName"
+                                                            type="text"
                                                             value={newSheetName}
                                                             onChange={(e) => setNewSheetName(e.target.value)}
                                                             placeholder="Tên sheet…"
                                                             className="h-7 w-28 text-xs"
-                                                            autoFocus
+                                                            autoComplete="off"
+                                                            autoFocus={typeof window !== 'undefined' && !/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)}
                                                             onBlur={() => setIsAddingSheet(false)}
                                                         />
                                                     </form>
@@ -522,11 +528,14 @@ export function DeviceDetail({
                                                                 }}
                                                             >
                                                                 <Input
+                                                                    name="newColumnName"
+                                                                    type="text"
                                                                     value={newColumnName}
                                                                     onChange={(e) => setNewColumnName(e.target.value)}
                                                                     placeholder="Tên cột…"
                                                                     className="h-8 w-40 text-sm"
-                                                                    autoFocus
+                                                                    autoComplete="off"
+                                                                    autoFocus={typeof window !== 'undefined' && !/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)}
                                                                 />
                                                                 <Button type="submit" size="sm">Thêm</Button>
                                                             </form>
@@ -565,11 +574,14 @@ export function DeviceDetail({
                                                         }}
                                                     >
                                                         <Input
+                                                            name="newColumnName"
+                                                            type="text"
                                                             value={newColumnName}
                                                             onChange={(e) => setNewColumnName(e.target.value)}
                                                             placeholder="Tên cột…"
                                                             className="h-7 w-28 text-xs"
-                                                            autoFocus
+                                                            autoComplete="off"
+                                                            autoFocus={typeof window !== 'undefined' && !/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)}
                                                             onBlur={() => setAddingColumnSheet(null)}
                                                         />
                                                     </form>
@@ -620,9 +632,12 @@ function EditField({ icon, label, value, onChange }: {
             <div className="flex-1 min-w-0">
                 <Label className="text-[11px] text-muted-foreground">{label}</Label>
                 <Input
+                    name={label}
+                    type="text"
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
                     className="h-7 text-sm mt-0.5"
+                    autoComplete="off"
                 />
             </div>
         </div>
