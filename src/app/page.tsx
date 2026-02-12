@@ -1,7 +1,28 @@
-import { redirect } from "next/navigation";
+"use client"
 
-// Server Component — redirect ngay trên server, không render HTML
-// → tránh hydration mismatch do browser extension inject attributes
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { useAuth } from "@/contexts/AuthContext"
+
+// Client Component — check auth state và redirect
 export default function HomePage() {
-  redirect("/dashboard");
+  const router = useRouter()
+  const { isAuthenticated, isLoading } = useAuth()
+
+  useEffect(() => {
+    if (!isLoading) {
+      if (isAuthenticated) {
+        router.push("/dashboard")
+      } else {
+        router.push("/sign-in")
+      }
+    }
+  }, [isAuthenticated, isLoading, router])
+
+  // Show loading while checking auth
+  return (
+    <div className="flex h-screen items-center justify-center">
+      <div className="text-muted-foreground">Loading...</div>
+    </div>
+  )
 }
