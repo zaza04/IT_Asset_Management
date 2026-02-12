@@ -22,6 +22,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { useAuth } from "@/contexts/AuthContext"
 
 export function NavUser({
   user,
@@ -33,6 +34,7 @@ export function NavUser({
   }
 }) {
   const { isMobile } = useSidebar()
+  const { logout } = useAuth()
 
   return (
     <SidebarMenu>
@@ -84,11 +86,12 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild className="cursor-pointer">
-              <Link href="/sign-in">
-                <LogOut />
-                Đăng xuất
-              </Link>
+            <DropdownMenuItem
+              className="cursor-pointer"
+              onClick={logout}
+            >
+              <LogOut />
+              Đăng xuất
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

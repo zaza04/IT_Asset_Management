@@ -5,7 +5,6 @@ import {
   LayoutDashboard,
   Settings,
   Laptop,
-  Server,
 } from "lucide-react"
 import Link from "next/link"
 
@@ -13,6 +12,7 @@ import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
 import { useDeviceList } from "@/hooks/useDevices"
 import { Badge } from "@/components/ui/badge"
+import { Logo } from "@/components/logo"
 import {
   Sidebar,
   SidebarContent,
@@ -123,6 +123,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     },
   ]
 
+  // ... imports
+
   return (
     <Sidebar {...props}>
       <SidebarHeader>
@@ -131,7 +133,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenuButton size="lg" asChild>
               <Link href="/dashboard">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                  <Server size={24} className="text-current" />
+                  <Logo size={24} className="text-current" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">IT Asset Management</span>

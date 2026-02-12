@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
+import { useState } from "react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
@@ -21,10 +22,12 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
+import { useAuth } from "@/contexts/AuthContext"
+import { toast } from "sonner"
 
 const loginFormSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  email: z.string().min(1, "Email is required"),
+  password: z.string().min(1, "Password is required"),
 })
 
 type LoginFormValues = z.infer<typeof loginFormSchema>
@@ -33,13 +36,31 @@ export function LoginForm1({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const { login } = useAuth()
+  const [isLoading, setIsLoading] = useState(false)
+
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginFormSchema),
     defaultValues: {
-      email: "test@example.com",
-      password: "password",
+      email: "",
+      password: "",
     },
   })
+
+  async function onSubmit(data: LoginFormValues) {
+    setIsLoading(true)
+    try {
+      await login(data)
+      toast.success("Login successful!")
+    } catch (error) {
+      toast.error("Invalid credentials. Use admin/admin")
+      form.setError("password", {
+        message: "Invalid email or password",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -47,12 +68,12 @@ export function LoginForm1({
         <CardHeader className="text-center">
           <CardTitle className="text-xl">Welcome back</CardTitle>
           <CardDescription>
-            Enter your email below to login to your account
+            Login with admin/admin
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form action="/">
+            <form onSubmit={form.handleSubmit(onSubmit)}>
               <div className="grid gap-6">
                 <div className="grid gap-4">
                   <FormField
@@ -60,11 +81,12 @@ export function LoginForm1({
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Email</FormLabel>
+                        <FormLabel>Username</FormLabel>
                         <FormControl>
                           <Input
-                            type="email"
-                            placeholder="test@example.com"
+                            type="text"
+                            placeholder="admin"
+                            disabled={isLoading}
                             {...field}
                           />
                         </FormControl>
@@ -77,50 +99,33 @@ export function LoginForm1({
                     name="password"
                     render={({ field }) => (
                       <FormItem>
-                        <div className="flex items-center">
-                          <FormLabel>Password</FormLabel>
-                          <a
-                            href="/auth/forgot-password"
-                            className="ml-auto text-sm underline-offset-4 hover:underline"
-                          >
-                            Forgot your password?
-                          </a>
-                        </div>
+                        <FormLabel>Password</FormLabel>
                         <FormControl>
-                          <Input type="password" {...field} />
+                          <Input
+                            type="password"
+                            disabled={isLoading}
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  <Button type="submit" className="w-full cursor-pointer">
-                    Login
+                  <Button
+                    type="submit"
+                    className="w-full cursor-pointer"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? "Logging in..." : "Login"}
                   </Button>
-
-                  <Button variant="outline" className="w-full cursor-pointer" type="button">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                      <path
-                        d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"
-                        fill="currentColor"
-                      />
-                    </svg>
-                    Login with Google
-                  </Button>
-                </div>
-                <div className="text-center text-sm">
-                  Don&apos;t have an account?{" "}
-                  <a href="/auth/sign-up" className="underline underline-offset-4">
-                    Sign up
-                  </a>
                 </div>
               </div>
             </form>
           </Form>
         </CardContent>
       </Card>
-      <div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4">
-        By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
-        and <a href="#">Privacy Policy</a>.
+      <div className="text-muted-foreground text-center text-xs text-balance">
+        IT Asset Management System
       </div>
     </div>
   )

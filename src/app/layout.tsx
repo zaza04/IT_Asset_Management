@@ -10,7 +10,12 @@ import { Toaster } from "@/components/ui/sonner";
 export const metadata: Metadata = {
   title: "IT Asset Management",
   description: "Quản lý tài sản IT - Device Dashboard",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
+
+import { AuthProvider } from "@/contexts/AuthContext";
 
 export default function RootLayout({
   children,
@@ -21,10 +26,12 @@ export default function RootLayout({
     <html lang="vi" className={`${inter.variable} antialiased`}>
       <body className={inter.className} suppressHydrationWarning={true}>
         <ThemeProvider defaultTheme="system" storageKey="nextjs-ui-theme">
-          <SidebarConfigProvider>
-            {children}
-            <Toaster />
-          </SidebarConfigProvider>
+          <AuthProvider>
+            <SidebarConfigProvider>
+              {children}
+              <Toaster />
+            </SidebarConfigProvider>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -113,6 +113,14 @@ export function DeviceDetail({
         setActiveSheet(null); // Reset sheet khi đổi device
     }, [initialMode, isOpen]);
 
+    // Tự động populate form khi vào Edit mode — không cần click pencil nữa
+    useEffect(() => {
+        if (isEditMode && device) {
+            setEditForm({ ...device.deviceInfo });
+            setIsEditing(true);
+        }
+    }, [isEditMode, device]);
+
     // Cảnh báo khi đóng tab/trình duyệt trong edit mode
     useEffect(() => {
         if (!isEditMode) return;
@@ -198,15 +206,14 @@ export function DeviceDetail({
                     </Button>
                 )}
 
-                {/* Edit mode — Save + Cancel bar ở góc trên trái */}
+                {/* Edit mode — Save + Cancel bar ở góc trên trái (điểm save DUY NHẤT) */}
                 {isEditMode && (
                     <div className="absolute top-2 left-2 z-20 flex items-center gap-1.5">
                         <Button
                             size="sm"
                             className="h-8 text-xs"
                             onClick={() => {
-                                if (isEditing) saveEditing();
-                                setCurrentMode('view');
+                                saveEditing();
                                 onClose();
                             }}
                         >
@@ -218,7 +225,7 @@ export function DeviceDetail({
                             size="sm"
                             className="h-8 text-xs"
                             onClick={() => {
-                                if (isEditing) cancelEditing();
+                                cancelEditing();
                                 setCurrentMode('view');
                             }}
                         >
@@ -282,28 +289,10 @@ export function DeviceDetail({
 
                         <Separator />
 
-                        {/* Thông tin thiết bị — view / edit mode */}
+                        {/* Thông tin thiết bị — tự động editable khi ở Edit mode */}
                         <div className="space-y-3">
-                            <div className="flex items-center justify-between">
-                                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Thông tin</p>
-                                {isEditMode && (
-                                    isEditing ? (
-                                        <div className="flex gap-1">
-                                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={saveEditing} aria-label="Lưu thay đổi">
-                                                <Check className="h-3.5 w-3.5 text-emerald-500" />
-                                            </Button>
-                                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={cancelEditing} aria-label="Hủy thay đổi">
-                                                <X className="h-3.5 w-3.5 text-muted-foreground" />
-                                            </Button>
-                                        </div>
-                                    ) : (
-                                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={startEditing} aria-label="Chỉnh sửa thông tin">
-                                            <Pencil className="h-3 w-3 text-muted-foreground" />
-                                        </Button>
-                                    )
-                                )}
-                            </div>
-                            {isEditing ? (
+                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Thông tin</p>
+                            {isEditMode ? (
                                 <div className="space-y-2.5">
                                     <EditField icon={<Laptop className="h-3.5 w-3.5" />} label="OS" value={editForm.os ?? ''} onChange={(v) => setEditForm((f) => ({ ...f, os: v }))} />
                                     <EditField icon={<Cpu className="h-3.5 w-3.5" />} label="CPU" value={editForm.cpu ?? ''} onChange={(v) => setEditForm((f) => ({ ...f, cpu: v }))} />

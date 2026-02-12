@@ -1,21 +1,42 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-// This function can be marked `async` if using `await` inside
+// Protected routes that require authentication
+const protectedRoutes = ['/dashboard', '/devices', '/settings']
+
+// Public routes that don't require authentication
+const authRoutes = ['/sign-in', '/sign-up', '/forgot-password']
+
+function isAuthenticated(request: NextRequest): boolean {
+  // Check if session exists in cookies or localStorage
+  // Since middleware runs on server, we check cookies
+  const sessionCookie = request.cookies.get('auth_session')
+
+  // For client-side localStorage check, we'll rely on AuthContext
+  // Here we just check if user is trying to access protected routes
+  return false // Will be handled by AuthContext on client-side
+}
+
 export function middleware(request: NextRequest) {
-  // Add custom middleware logic here
-  // For example: authentication, redirects, etc.
-  
-  // Example: Redirect /login to /auth/sign-in
-  if (request.nextUrl.pathname === '/login') {
-    return NextResponse.redirect(new URL('/auth/sign-in', request.url))
+  const { pathname } = request.nextUrl
+
+  // Check if accessing a protected route
+  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
+  const isAuthRoute = authRoutes.some(route => pathname.startsWith(route))
+
+  // For now, let client-side AuthContext handle redirects
+  // Middleware will just handle basic redirects
+
+  // Redirect /login to /sign-in
+  if (pathname === '/login') {
+    return NextResponse.redirect(new URL('/sign-in', request.url))
   }
-  
-  // Example: Redirect /register to /auth/sign-up
-  if (request.nextUrl.pathname === '/register') {
-    return NextResponse.redirect(new URL('/auth/sign-up', request.url))
+
+  // Redirect /register to /sign-up
+  if (pathname === '/register') {
+    return NextResponse.redirect(new URL('/sign-up', request.url))
   }
-  
+
   return NextResponse.next()
 }
 
@@ -26,7 +47,7 @@ export const config = {
     // - api (API routes)
     // - _next/static (static files)
     // - _next/image (image optimization files)
-    // - favicon.ico (favicon file)
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    // - favicon.svg (favicon file)
+    '/((?!api|_next/static|_next/image|favicon.svg).*)',
   ],
 }

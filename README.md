@@ -140,6 +140,16 @@ npm run dev
 
 Mở trình duyệt tại [http://localhost:3000](http://localhost:3000).
 
+### 🔐 Đăng nhập
+
+Ứng dụng yêu cầu đăng nhập để truy cập. Sử dụng thông tin sau:
+
+- **URL đăng nhập**: [http://localhost:3000/sign-in](http://localhost:3000/sign-in)
+- **Username**: `admin`
+- **Password**: `admin`
+
+> **Lưu ý**: Đây là authentication đơn giản cho mục đích demo/internal tool. Session được lưu trong localStorage và hết hạn sau 7 ngày.
+
 ### Build Production
 
 ```bash
