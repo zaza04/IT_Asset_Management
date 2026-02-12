@@ -11,6 +11,14 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarMenu,
@@ -19,6 +27,7 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
+  useSidebar,
 } from "@/components/ui/sidebar"
 
 export function NavMain({
@@ -40,6 +49,9 @@ export function NavMain({
   }[]
 }) {
   const pathname = usePathname()
+  const { state: sidebarState, isMobile } = useSidebar()
+  // Khi sidebar collapsed (icon-only mode)
+  const isCollapsed = sidebarState === "collapsed"
 
   // Check if any subitem is active to determine if parent should be open
   const shouldBeOpen = (item: typeof items[0]) => {
@@ -52,41 +64,83 @@ export function NavMain({
       <SidebarGroupLabel>{label}</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => (
-          <Collapsible
-            key={item.title}
-            asChild
-            defaultOpen={shouldBeOpen(item)}
-            className="group/collapsible"
-          >
-            <SidebarMenuItem>
-              {item.items?.length ? (
-                <>
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuButton tooltip={item.title} className="cursor-pointer">
-                      {item.icon && <item.icon />}
-                      <span>{item.title}</span>
-                      <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                    </SidebarMenuButton>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <SidebarMenuSub>
-                      {item.items?.map((subItem) => (
-                        <SidebarMenuSubItem key={subItem.title}>
-                          <SidebarMenuSubButton asChild className="cursor-pointer" isActive={pathname === subItem.url}>
-                            <Link
-                              href={subItem.url}
-                              target={(item.title === "Auth Pages" || item.title === "Errors") ? "_blank" : undefined}
-                              rel={(item.title === "Auth Pages" || item.title === "Errors") ? "noopener noreferrer" : undefined}
-                            >
-                              <span>{subItem.title}</span>
-                            </Link>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
+          <React.Fragment key={item.title}>
+            {item.items?.length ? (
+              // Có sub-items → collapsed dùng DropdownMenu, expanded dùng Collapsible
+              isCollapsed ? (
+                // === COLLAPSED MODE: DropdownMenu popup ===
+                <SidebarMenuItem>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <SidebarMenuButton
+                        tooltip={item.title}
+                        className="cursor-pointer"
+                        isActive={shouldBeOpen(item)}
+                      >
+                        {item.icon && <item.icon />}
+                        <span>{item.title}</span>
+                      </SidebarMenuButton>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      side={isMobile ? "bottom" : "right"}
+                      align="start"
+                      sideOffset={4}
+                      className="min-w-48 rounded-lg"
+                    >
+                      <DropdownMenuLabel>{item.title}</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      {item.items.map((subItem) => (
+                        <DropdownMenuItem
+                          key={subItem.title}
+                          asChild
+                          className="cursor-pointer"
+                        >
+                          <Link href={subItem.url}>
+                            <span>{subItem.title}</span>
+                          </Link>
+                        </DropdownMenuItem>
                       ))}
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                </>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </SidebarMenuItem>
               ) : (
+                // === EXPANDED MODE: Collapsible ===
+                <Collapsible
+                  asChild
+                  defaultOpen={shouldBeOpen(item)}
+                  className="group/collapsible"
+                >
+                  <SidebarMenuItem>
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuButton tooltip={item.title} className="cursor-pointer">
+                        {item.icon && <item.icon />}
+                        <span>{item.title}</span>
+                        <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                      </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarMenuSub>
+                        {item.items?.map((subItem) => (
+                          <SidebarMenuSubItem key={subItem.title}>
+                            <SidebarMenuSubButton asChild className="cursor-pointer" isActive={pathname === subItem.url}>
+                              <Link
+                                href={subItem.url}
+                                target={(item.title === "Auth Pages" || item.title === "Errors") ? "_blank" : undefined}
+                                rel={(item.title === "Auth Pages" || item.title === "Errors") ? "noopener noreferrer" : undefined}
+                              >
+                                <span>{subItem.title}</span>
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        ))}
+                      </SidebarMenuSub>
+                    </CollapsibleContent>
+                  </SidebarMenuItem>
+                </Collapsible>
+              )
+            ) : (
+              // Không có sub-items → link trực tiếp
+              <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip={item.title} className="cursor-pointer relative" isActive={pathname === item.url}>
                   <Link href={item.url}>
                     {/* Active indicator — bar bên trái */}
@@ -98,9 +152,9 @@ export function NavMain({
                     {item.badge}
                   </Link>
                 </SidebarMenuButton>
-              )}
-            </SidebarMenuItem>
-          </Collapsible>
+              </SidebarMenuItem>
+            )}
+          </React.Fragment>
         ))}
       </SidebarMenu>
     </SidebarGroup>

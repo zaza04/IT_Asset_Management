@@ -3,6 +3,8 @@
 import { SectionCards } from "./section-cards"
 import { HardwareOverview } from "@/components/dashboard/HardwareOverview"
 import { RecentActivity } from "@/components/dashboard/RecentActivity"
+import { DeviceStatusChart } from "@/components/dashboard/DeviceStatusChart"
+import { OSDistributionChart } from "@/components/dashboard/OSDistributionChart"
 import { useDeviceList } from "@/hooks/useDevices"
 import { Button } from "@/components/ui/button"
 import {
@@ -52,7 +54,13 @@ export function DeviceDashboardClient() {
       {/* Row 1 — Stats Cards (4 cột) */}
       <SectionCards devices={devices} />
 
-      {/* Row 2 — Hardware Overview (2/3) + Recent Activity (1/3) */}
+      {/* Row 2 — Charts: Trạng thái thiết bị + Phân bổ OS (full width, 50/50) */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <DeviceStatusChart devices={devices} />
+        <OSDistributionChart devices={devices} />
+      </div>
+
+      {/* Row 3 — Hardware Overview (2/3) + Recent Activity (1/3) */}
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <HardwareOverview devices={devices} />
@@ -62,3 +70,4 @@ export function DeviceDashboardClient() {
     </div>
   )
 }
+
