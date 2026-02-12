@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/select';
 import { DeviceStatus, DEVICE_STATUS_CONFIG } from '@/types/device';
 import { useDeviceStore } from '@/stores/useDeviceStore';
-import { Monitor, Cpu, HardDrive, Laptop, Network } from 'lucide-react';
+import { Monitor, Cpu, HardDrive, Laptop, Network, Loader2 } from 'lucide-react';
 
 interface CreateDeviceDialogProps {
     isOpen: boolean;
