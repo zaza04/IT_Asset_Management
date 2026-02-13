@@ -312,6 +312,21 @@ html {
   }
 }
 
+/* ===== Typography Enhancements ===== */
+
+/* B2: Tránh bị widow/orphan ở headings */
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+/* B3: Số thẳng hàng trong bảng và thống kê */
+[role="cell"] .tabular-nums,
+.stat-number {
+  font-variant-numeric: tabular-nums;
+}
+
 /* ===== Reduced Motion Support ===== */
 @media (prefers-reduced-motion: reduce) {
 

@@ -6,7 +6,7 @@ export type DeviceStatus = 'active' | 'broken' | 'inactive';
 export const DEVICE_STATUS_CONFIG = {
   active: { label: 'Đang sử dụng', softColor: 'success' as const },
   broken: { label: 'Hư hỏng', softColor: 'error' as const },
-  inactive: { label: 'Không sử dụng', softColor: 'default' as const },
+  inactive: { label: 'Không sử dụng', softColor: 'warning' as const },
 } as const;
 
 // Device data structure

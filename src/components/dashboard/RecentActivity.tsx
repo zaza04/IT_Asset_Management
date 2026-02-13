@@ -4,6 +4,7 @@ import * as React from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Device, DeviceStatus, DEVICE_STATUS_CONFIG } from "@/types/device"
 import { SoftLabel } from "@/components/ui/soft-label"
+import { timeAgo } from '@/lib/time'
 
 interface RecentActivityProps {
     devices: Device[]
@@ -12,21 +13,10 @@ interface RecentActivityProps {
 const DOT_COLORS: Record<DeviceStatus, string> = {
     active: 'bg-emerald-500',
     broken: 'bg-red-500',
-    inactive: 'bg-gray-400',
+    inactive: 'bg-amber-500',
 }
 
-function timeAgo(dateStr: string): string {
-    const now = Date.now();
-    const diff = now - new Date(dateStr).getTime();
-    const minutes = Math.floor(diff / 60000);
-    if (minutes < 1) return 'Vừa xong';
-    if (minutes < 60) return `${minutes}m trước`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}h trước`;
-    const days = Math.floor(hours / 24);
-    if (days < 30) return `${days}d trước`;
-    return new Date(dateStr).toLocaleDateString('vi-VN');
-}
+
 
 export function RecentActivity({ devices }: RecentActivityProps) {
     const recentDevices = React.useMemo(() =>

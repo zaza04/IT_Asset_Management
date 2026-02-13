@@ -87,7 +87,7 @@ export function FilterBar({ onFilterChange, onReset, className }: FilterBarProps
                 <SearchBar
                     value={search}
                     onChange={setSearch}
-                    placeholder="Tìm kiếm theo tên / ID..."
+                    placeholder="Tìm theo tên, IP hoặc ID…"
                     className="w-full sm:w-[300px]"
                 />
 
@@ -107,8 +107,8 @@ export function FilterBar({ onFilterChange, onReset, className }: FilterBarProps
                             <SelectItem key={key} value={key}>
                                 <div className="flex items-center gap-2">
                                     <div className={`h-2 w-2 rounded-full ${key === 'active' ? 'bg-emerald-500' :
-                                            key === 'broken' ? 'bg-red-500' :
-                                                'bg-gray-400'
+                                        key === 'broken' ? 'bg-red-500' :
+                                            'bg-amber-500'
                                         }`} />
                                     {config.label}
                                 </div>

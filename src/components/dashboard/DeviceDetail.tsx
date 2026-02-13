@@ -53,7 +53,7 @@ import { CSS } from '@dnd-kit/utilities';
 const STATUS_DOT_COLORS: Record<DeviceStatus, string> = {
     active: 'bg-emerald-500',
     broken: 'bg-red-500',
-    inactive: 'bg-gray-400',
+    inactive: 'bg-amber-500',
 };
 
 interface DeviceDetailProps {

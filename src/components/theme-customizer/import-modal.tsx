@@ -1,6 +1,7 @@
 "use client"
 
 import React from 'react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Textarea } from '@/components/ui/textarea'
@@ -18,17 +19,17 @@ export function ImportModal({ open, onOpenChange, onImport }: ImportModalProps) 
   const processImport = () => {
     try {
       if (!importText.trim()) {
-        console.error("No CSS content provided")
+        toast.error('Vui lòng nhập CSS theme')
         return
       }
 
       // Parse CSS content into light and dark theme variables
       const lightTheme: Record<string, string> = {}
       const darkTheme: Record<string, string> = {}
-      
+
       // Split CSS into sections
       const cssText = importText.replace(/\/\*[\s\S]*?\*\//g, '') // Remove comments
-      
+
       // Extract :root section (light theme)
       const rootMatch = cssText.match(/:root\s*\{([^}]+)\}/)
       if (rootMatch) {
@@ -39,7 +40,7 @@ export function ImportModal({ open, onOpenChange, onImport }: ImportModalProps) 
           lightTheme[variable.trim()] = value.trim()
         }
       }
-      
+
       // Extract .dark section (dark theme)
       const darkMatch = cssText.match(/\.dark\s*\{([^}]+)\}/)
       if (darkMatch) {
@@ -50,15 +51,16 @@ export function ImportModal({ open, onOpenChange, onImport }: ImportModalProps) 
           darkTheme[variable.trim()] = value.trim()
         }
       }
-      
+
       // Store the imported theme
       const importedThemeData = { light: lightTheme, dark: darkTheme }
       onImport(importedThemeData)
-      
+      toast.success('Import theme thành công!')
+
       onOpenChange(false)
       setImportText("")
     } catch (error) {
-      console.error("Error importing theme:", error)
+      toast.error('Lỗi import theme. Vui lòng kiểm tra lại CSS.')
     }
   }
 

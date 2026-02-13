@@ -46,6 +46,9 @@ import {
     Filter,
     CheckCircle2,
     Pencil,
+    SearchX,
+    Loader2,
+    FileDown,
 } from 'lucide-react';
 import {
     AlertDialog,
@@ -62,6 +65,9 @@ import { useDeviceStore } from '@/stores/useDeviceStore';
 import { SoftLabel } from '@/components/ui/soft-label';
 import { FilterBar, DeviceFilters } from './FilterBar';
 import { isWithinInterval, parseISO } from 'date-fns';
+import { EmptyState } from '@/components/EmptyState';
+import { timeAgo } from '@/lib/time';
+import { exportDevicesToCSV } from '@/lib/export-utils';
 
 interface DeviceListProps {
     devices: Device[];
@@ -71,26 +77,11 @@ interface DeviceListProps {
     onDeleteDevice: (deviceId: string) => void;
 }
 
-// Thời gian tương đối (vd: "2 giờ trước")
-function timeAgo(dateStr: string): string {
-    const now = Date.now();
-    const date = new Date(dateStr).getTime();
-    const diff = now - date;
-    const minutes = Math.floor(diff / 60000);
-    if (minutes < 1) return 'Vừa xong';
-    if (minutes < 60) return `${minutes} phút trước`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours} giờ trước`;
-    const days = Math.floor(hours / 24);
-    if (days < 30) return `${days} ngày trước`;
-    return new Date(dateStr).toLocaleDateString('vi-VN');
-}
-
 // Dot colors cho status dropdown items
 const STATUS_DOT_COLORS: Record<DeviceStatus, string> = {
     active: 'bg-emerald-500',
     broken: 'bg-red-500',
-    inactive: 'bg-gray-400',
+    inactive: 'bg-amber-500',
 };
 
 function StatusLabel({ status }: { status: DeviceStatus }) {
@@ -115,6 +106,7 @@ export function DeviceList({
     const [deleteId, setDeleteId] = useState<string | null>(null);
     const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
     const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
     const [filters, setFilters] = useState<DeviceFilters>({});
 
     const setDeviceStatus = useDeviceStore((s) => s.setDeviceStatus);
@@ -294,6 +286,24 @@ export function DeviceList({
                 onFilterChange={setFilters}
                 onReset={() => setFilters({})}
             />
+            {/* Export CSV — luôn hiển thị, export thiết bị đang filter */}
+            <div className="flex justify-end">
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                        // Export selected rows nếu có, ngược lại export tất cả thiết bị đang filter
+                        const selectedRows = table.getFilteredSelectedRowModel().rows;
+                        const dataToExport = selectedRows.length > 0
+                            ? selectedRows.map(r => r.original)
+                            : filteredDevices;
+                        exportDevicesToCSV(dataToExport);
+                    }}
+                >
+                    <FileDown className="mr-1 h-3.5 w-3.5" aria-hidden="true" />
+                    Export CSV
+                </Button>
+            </div>
 
             {/* Bulk Actions toolbar */}
             {Object.keys(rowSelection).length > 0 && (
@@ -367,11 +377,19 @@ export function DeviceList({
                                         role="row"
                                         aria-label={`Device ${row.original.deviceInfo.name}, Status ${row.original.status}, IP ${row.original.deviceInfo.ip || 'Not set'}, OS ${row.original.deviceInfo.os}`}
                                         className="cursor-pointer hover:bg-muted/50"
+                                        tabIndex={0}
                                         onClick={(e) => {
                                             // Không mở view modal khi click vào actions column hoặc checkbox
                                             const target = e.target as HTMLElement;
                                             if (target.closest('[data-no-row-click]')) return;
                                             onViewDevice(row.original);
+                                        }}
+                                        onKeyDown={(e) => {
+                                            // B1: Hỗ trợ keyboard navigation — Enter mở detail
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                onViewDevice(row.original);
+                                            }
                                         }}
                                     >
                                         {row.getVisibleCells().map((cell) => (
@@ -386,8 +404,13 @@ export function DeviceList({
                                 ))
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={columns.length} className="h-24 text-center">
-                                        Không tìm thấy thiết bị
+                                    <TableCell colSpan={columns.length} className="h-48">
+                                        <EmptyState
+                                            icon={SearchX}
+                                            iconSize={48}
+                                            title="Không tìm thấy thiết bị"
+                                            description="Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm"
+                                        />
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -433,14 +456,19 @@ export function DeviceList({
                         <AlertDialogCancel>Hủy</AlertDialogCancel>
                         <AlertDialogAction
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            onClick={() => {
+                            disabled={isDeleting}
+                            onClick={async () => {
                                 if (deleteId) {
+                                    setIsDeleting(true);
                                     onDeleteDevice(deleteId);
                                     setDeleteId(null);
+                                    setIsDeleting(false);
                                 }
                             }}
                         >
-                            Xóa
+                            {isDeleting ? (
+                                <><Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />Đang xóa…</>
+                            ) : 'Xóa'}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
@@ -459,14 +487,19 @@ export function DeviceList({
                         <AlertDialogCancel>Hủy</AlertDialogCancel>
                         <AlertDialogAction
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            onClick={() => {
+                            disabled={isDeleting}
+                            onClick={async () => {
+                                setIsDeleting(true);
                                 const selectedRows = table.getFilteredSelectedRowModel().rows;
                                 selectedRows.forEach((row) => onDeleteDevice(row.original.id));
                                 setRowSelection({});
                                 setBulkDeleteOpen(false);
+                                setIsDeleting(false);
                             }}
                         >
-                            Xóa tất cả
+                            {isDeleting ? (
+                                <><Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />Đang xóa…</>
+                            ) : 'Xóa tất cả'}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
