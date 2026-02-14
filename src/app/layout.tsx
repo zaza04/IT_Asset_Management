@@ -16,6 +16,8 @@ export const metadata: Metadata = {
 import { AuthProvider } from "@/contexts/AuthContext";
 import { QueryProvider } from "@/providers/QueryProvider";
 
+import { ThemeSyncProvider } from "@/components/theme-sync-provider";
+
 export default function RootLayout({
   children,
 }: {
@@ -25,18 +27,19 @@ export default function RootLayout({
     <html
       lang="vi"
       className={`${inter.variable} antialiased`}
-      style={{ colorScheme: 'light dark' }}
     >
       <body className={inter.className} suppressHydrationWarning={true}>
-        <ThemeProvider defaultTheme="system" storageKey="nextjs-ui-theme">
+        <ThemeProvider defaultTheme="light" storageKey="nextjs-ui-theme">
           <AuthProvider>
-            <QueryProvider>
-              <SidebarConfigProvider>
-                {children}
-                <CommandPalette />
-                <Toaster />
-              </SidebarConfigProvider>
-            </QueryProvider>
+            <ThemeSyncProvider>
+              <QueryProvider>
+                <SidebarConfigProvider>
+                  {children}
+                  <CommandPalette />
+                  <Toaster />
+                </SidebarConfigProvider>
+              </QueryProvider>
+            </ThemeSyncProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

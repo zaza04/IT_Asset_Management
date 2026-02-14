@@ -150,6 +150,7 @@ export type Database = {
                     full_name: string | null
                     id: string
                     role: string | null
+                    settings: Json | null
                     updated_at: string
                     user_id: string
                 }
@@ -160,6 +161,7 @@ export type Database = {
                     full_name?: string | null
                     id?: string
                     role?: string | null
+                    settings?: Json | null
                     updated_at?: string
                     user_id: string
                 }
@@ -170,6 +172,7 @@ export type Database = {
                     full_name?: string | null
                     id?: string
                     role?: string | null
+                    settings?: Json | null
                     updated_at?: string
                     user_id?: string
                 }

@@ -5,7 +5,10 @@ import {
   LayoutDashboard,
   Settings,
   Laptop,
+  Users,
+  BookOpen,
 } from "lucide-react"
+
 import Link from "next/link"
 
 import { NavMain } from "@/components/nav-main"
@@ -86,11 +89,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           icon: Laptop,
           badge: <DeviceCountBadge />,
         },
+        {
+          title: "Người dùng",
+          url: "/users",
+          icon: Users,
+        },
       ],
     },
     {
       label: "Hệ thống",
       items: [
+        {
+          title: "Tài liệu",
+          url: "/docs",
+          icon: BookOpen,
+        },
         {
           title: "Cài đặt",
           url: "#",

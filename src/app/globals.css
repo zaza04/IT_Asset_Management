@@ -156,6 +156,38 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Custom Scrollbar Styling */
+@layer utilities {
+  /* Webkit browsers (Chrome, Safari, Edge) */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-border/80 rounded-full hover:bg-muted-foreground/50 transition-colors;
+  }
+
+  /* Firefox */
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+}
+
+/* Enforce color-scheme to match the class */
+html.light {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
 /* Ẩn scrollbar native — dùng cho tab overflow */
 .scrollbar-none {
   -ms-overflow-style: none;
