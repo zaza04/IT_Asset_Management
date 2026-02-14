@@ -3,46 +3,46 @@
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { useQueryClient } from "@tanstack/react-query"
 import { Loader2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { signIn } from "@/app/actions/auth"
-import { deviceKeys } from "@/hooks/useDevicesQuery"
+import { signUp } from "@/app/actions/auth"
 
-export function SignInForm({
+export function SignUpForm({
     initialMessage
 }: {
     initialMessage?: string
 }) {
     const router = useRouter()
-    const queryClient = useQueryClient()
     const [isPending, startTransition] = useTransition()
     const [error, setError] = useState<string | null>(initialMessage || null)
+    const [fieldErrors, setFieldErrors] = useState<{ confirmPassword?: string }>({})
 
     const handleSubmit = (formData: FormData) => {
         setError(null)
+        setFieldErrors({})
+
+        // Client-side validation
+        const password = formData.get("password") as string
+        const confirmPassword = formData.get("confirmPassword") as string
+
+        if (password !== confirmPassword) {
+            setFieldErrors({ confirmPassword: "Mật khẩu xác nhận không khớp" })
+            return
+        }
 
         startTransition(async () => {
-            const result = await signIn(formData)
+            const result = await signUp(formData)
 
             if (result.error) {
                 setError(result.error)
                 return
             }
 
-            // Important: Force refresh data after login
-            // 1. Invalidate device queries
-            await queryClient.invalidateQueries({ queryKey: deviceKeys.all })
-            await queryClient.resetQueries({ queryKey: deviceKeys.all })
-
-            // 2. Refresh router cache (server components)
-            router.refresh()
-
-            // 3. Navigate
-            router.push("/devices")
+            // Redirect to sign in on success
+            router.push("/sign-in?message=Đăng ký thành công! Vui lòng đăng nhập.")
         })
     }
 
@@ -63,38 +63,49 @@ export function SignInForm({
                             required
                             disabled={isPending}
                         />
+                        <p className="text-[0.8rem] text-muted-foreground">
+                            Sử dụng mã nhân viên hoặc tên viết tắt (vd: nv.an)
+                        </p>
                     </div>
                     <div className="grid gap-2 text-left">
-                        <div className="flex items-center">
-                            <Label htmlFor="password">Mật khẩu</Label>
-                            <Link
-                                href="/forgot-password"
-                                className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
-                                tabIndex={-1}
-                            >
-                                Quên mật khẩu?
-                            </Link>
-                        </div>
+                        <Label htmlFor="password">Mật khẩu</Label>
                         <Input
                             id="password"
-                            type="password"
                             name="password"
+                            type="password"
                             placeholder="123456"
                             autoComplete="off"
                             required
                             disabled={isPending}
                         />
                     </div>
+                    <div className="grid gap-2 text-left">
+                        <Label htmlFor="confirmPassword">Xác nhận mật khẩu</Label>
+                        <Input
+                            id="confirmPassword"
+                            name="confirmPassword"
+                            type="password"
+                            placeholder="123456"
+                            autoComplete="off"
+                            required
+                            disabled={isPending}
+                        />
+                        {fieldErrors.confirmPassword && (
+                            <p className="text-[0.8rem] text-destructive">{fieldErrors.confirmPassword}</p>
+                        )}
+                    </div>
+
                     <Button type="submit" className="w-full" disabled={isPending}>
                         {isPending ? (
                             <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Đang đăng nhập...
+                                Đang đăng ký...
                             </>
                         ) : (
-                            "Đăng nhập"
+                            "Đăng ký tài khoản"
                         )}
                     </Button>
+
                     {error && (
                         <p className="mt-2 bg-destructive/15 p-3 text-center text-destructive rounded-md text-sm font-medium animate-in fade-in slide-in-from-top-1">
                             {error}
@@ -115,13 +126,13 @@ export function SignInForm({
             </div>
 
             <Button variant="outline" type="button" disabled>
-                Login with Google (Coming Soon)
+                Github (Coming Soon)
             </Button>
 
             <div className="mt-4 text-center text-sm">
-                Chưa có tài khoản?{" "}
-                <Link href="/sign-up" className="underline">
-                    Đăng ký
+                Đã có tài khoản?{" "}
+                <Link href="/sign-in" className="underline underline-offset-4 hover:text-primary">
+                    Đăng nhập
                 </Link>
             </div>
         </div>

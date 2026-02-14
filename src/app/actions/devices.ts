@@ -121,6 +121,8 @@ export async function updateDevice(
 export async function deleteDevice(deviceId: string) {
     const supabase = await createClient()
 
+    // Database đã có constraint ON DELETE SET NULL cho activity_logs
+    // và ON DELETE CASCADE cho device_sheets
     const { error } = await supabase
         .from("devices")
         .delete()
