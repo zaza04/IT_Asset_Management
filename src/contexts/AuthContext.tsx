@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useMemo } from '
 import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import { User } from '@supabase/supabase-js'
+import { useQueryClient } from '@tanstack/react-query'
 
 interface AuthContextType {
     user: User | null
@@ -39,6 +40,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         checkUser()
     }, [pathname, supabase])
 
+    // Query Client for cache management
+    const queryClient = useQueryClient()
+
     // Listener cho auth state changes (tab switch, token refresh, client-side auth)
     useEffect(() => {
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -47,17 +51,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 setIsLoading(false)
 
                 if (event === 'SIGNED_IN') {
+                    // Xóa cache cũ & fetch lại data mới cho user mới
+                    await queryClient.invalidateQueries()
                     router.refresh()
                 }
 
                 if (event === 'SIGNED_OUT') {
+                    // Xóa sạch cache khi logout để tránh lộ data giữa các acc
+                    queryClient.removeQueries()
                     router.push('/sign-in')
                 }
             }
         )
 
         return () => subscription.unsubscribe()
-    }, [supabase, router])
+    }, [supabase, router, queryClient])
 
     const logout = async () => {
         setIsLoading(true)

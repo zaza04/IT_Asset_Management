@@ -1,11 +1,13 @@
 import { SignInForm } from "@/components/auth/sign-in-form"
 
-export default async function SignInPage({
-  searchParams,
-}: {
+// Force dynamic rendering to handle searchParams properly
+export const dynamic = 'force-dynamic'
+
+export default async function SignInPage(props: {
   searchParams: Promise<{ message: string }>
 }) {
-  const params = await searchParams
+  const searchParams = await props.searchParams
+  const message = searchParams?.message
 
   return (
     <div className="flex flex-col space-y-2 text-center">
@@ -16,7 +18,7 @@ export default async function SignInPage({
         Nhập tên đăng nhập để truy cập quản lý tài sản
       </p>
 
-      <SignInForm initialMessage={params?.message} />
+      <SignInForm initialMessage={message} />
     </div>
   )
 }

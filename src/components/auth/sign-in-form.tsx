@@ -33,15 +33,7 @@ export function SignInForm({
                 return
             }
 
-            // Important: Force refresh data after login
-            // 1. Invalidate device queries
-            await queryClient.invalidateQueries({ queryKey: deviceKeys.all })
-            await queryClient.resetQueries({ queryKey: deviceKeys.all })
-
-            // 2. Refresh router cache (server components)
-            router.refresh()
-
-            // 3. Navigate
+            // Navigate immediately - AuthContext and Middleware will handle the rest
             router.push("/devices")
         })
     }

@@ -30,17 +30,17 @@ export default function RootLayout({
     >
       <body className={inter.className} suppressHydrationWarning={true}>
         <ThemeProvider defaultTheme="light" storageKey="nextjs-ui-theme">
-          <AuthProvider>
-            <ThemeSyncProvider>
-              <QueryProvider>
+          <QueryProvider>
+            <AuthProvider>
+              <ThemeSyncProvider>
                 <SidebarConfigProvider>
                   {children}
                   <CommandPalette />
                   <Toaster />
                 </SidebarConfigProvider>
-              </QueryProvider>
-            </ThemeSyncProvider>
-          </AuthProvider>
+              </ThemeSyncProvider>
+            </AuthProvider>
+          </QueryProvider>
         </ThemeProvider>
       </body>
     </html>
