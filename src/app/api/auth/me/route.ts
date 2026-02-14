@@ -1,20 +1,21 @@
 import { NextResponse } from 'next/server';
-import { verifyJWT } from '@/lib/jwt';
-import { cookies } from 'next/headers';
+import { createClient } from '@/utils/supabase/server';
 
+// Lấy thông tin user hiện tại từ Supabase Auth session
 export async function GET() {
-    const cookieStore = await cookies();
-    const token = cookieStore.get('token')?.value;
+    const supabase = await createClient();
+    const { data: { user }, error } = await supabase.auth.getUser();
 
-    if (!token) {
+    if (error || !user) {
         return NextResponse.json({ user: null }, { status: 401 });
     }
 
-    const payload = await verifyJWT(token);
-
-    if (!payload) {
-        return NextResponse.json({ user: null }, { status: 401 });
-    }
-
-    return NextResponse.json({ user: payload });
+    return NextResponse.json({
+        user: {
+            id: user.id,
+            email: user.email,
+            name: user.user_metadata?.full_name || user.email?.split('@')[0],
+            created_at: user.created_at,
+        }
+    });
 }

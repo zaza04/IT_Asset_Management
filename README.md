@@ -49,12 +49,12 @@
 
 | Thư viện | Mục đích |
 |---|---|
-| [Zustand](https://zustand.docs.pmnd.rs/) | Quản lý state toàn cục |
-| [Zundo](https://github.com/charkour/zundo) | Undo/Redo middleware cho Zustand |
-| [idb-keyval](https://github.com/nicedoc/idb-keyval) | Lưu trữ dữ liệu trên IndexedDB |
-| [SheetJS (xlsx)](https://sheetjs.com/) | Đọc/ghi file Excel |
-| [@tanstack/react-table](https://tanstack.com/table) | Bảng dữ liệu nâng cao (sort, filter, pagination) |
-| [@tanstack/react-virtual](https://tanstack.com/virtual) | Virtualized rendering cho bảng lớn |
+| [Supabase](https://supabase.com/) | JS v2 | Backend-as-a-Service (Auth, DB, Realtime) |
+| [PostgreSQL](https://www.postgresql.org/) | 15+ | Cơ sở dữ liệu chính |
+| [Drizzle ORM](https://orm.drizzle.team/) | 0.x | Type-safe ORM (Dự kiến migrate) |
+| [SheetJS (xlsx)](https://sheetjs.com/) | 0.18 | Đọc/ghi file Excel |
+| [@tanstack/react-table](https://tanstack.com/table) | 8.x | Bảng dữ liệu nâng cao (sort, filter, pagination) |
+| [@tanstack/react-virtual](https://tanstack.com/virtual) | 3.x | Virtualized rendering cho bảng lớn |
 
 ### Interactions
 
@@ -114,12 +114,48 @@ device-dashboard/
 
 ---
 
+## 🗄️ Lưu trữ & Backend
+
+Ứng dụng hiện tại đã chuyển từ IndexedDB sang sử dụng **Supabase** (PostgreSQL) để đảm bảo an toàn dữ liệu và hỗ trợ nhiều người dùng.
+
+- ✅ **Backend**: Supabase (Cloud hoặc Self-hosted)
+- ✅ **Database**: PostgreSQL
+- ✅ **Authentication**: Supabase Auth
+- ✅ **Storage**: Supabase Storage (cho file Excel/Ảnh)
+
+### Tuỳ chọn Deployment
+
+Bạn có 2 cách để chạy ứng dụng:
+
+#### 1. Sử dụng Supabase Cloud (Khuyên dùng)
+
+- Tạo project tại [supabase.com](https://supabase.com)
+- Lấy `SUPABASE_URL` và `SUPABASE_ANON_KEY`
+- Cập nhật file `.env.local`
+
+#### 2. Self-hosting với Docker (Dành cho Dev/Community)
+
+Dự án đi kèm cấu hình Docker để bạn tự host Database riêng.
+
+```bash
+# 1. Khởi chạy Database (PostgreSQL)
+docker-compose up -d
+
+# 2. Cấu hình .env
+# Copy .env.docker sang .env và cập nhật thông tin kết nối
+cp .env.docker .env
+```
+
+> **Lưu ý quan trọng**: Code hiện tại sử dụng `supabase-js`, nên để chạy local hoàn toàn ("Clone & Run"), bạn cần một instance Supabase local (sử dụng `npx supabase start`) hoặc refactor lại layer kết nối dữ liệu sang Drizzle ORM để kết nối trực tiếp vào container Postgres thuần.
+
+---
+
 ## 🚀 Bắt đầu
 
 ### Yêu cầu
 
 - **Node.js** >= 18.x ([tải tại đây](https://nodejs.org/))
-- **npm** (đi kèm Node.js) hoặc **pnpm** / **yarn**
+- **Docker** (nếu muốn chạy self-hosted DB)
 
 ### Cài đặt
 
@@ -130,6 +166,10 @@ cd device-dashboard
 
 # Cài đặt dependencies
 npm install
+
+# Setup biến môi trường
+cp .env.example .env.local
+# Điền thông tin Supabase vào .env.local
 ```
 
 ### Chạy Development Server
@@ -138,94 +178,13 @@ npm install
 npm run dev
 ```
 
-Mở trình duyệt tại [http://localhost:3000](http://localhost:3000).
-
-### 🔐 Đăng nhập
-
-Ứng dụng yêu cầu đăng nhập để truy cập. Sử dụng thông tin sau:
-
-- **URL đăng nhập**: [http://localhost:3000/sign-in](http://localhost:3000/sign-in)
-- **Username**: `admin`
-- **Password**: `admin`
-
-> **Lưu ý**: Đây là authentication đơn giản cho mục đích demo/internal tool. Session được lưu trong localStorage và hết hạn sau 7 ngày.
-
-### Build Production
-
-```bash
-# Build
-npm run build
-
-# Chạy production server
-npm start
-```
-
-### Lint
-
-```bash
-npm run lint
-```
-
----
-
-## 📖 Hướng dẫn sử dụng
-
-### Import thiết bị từ Excel
-
-1. Vào trang **Thiết bị** → bấm **Import Excel**
-2. Kéo thả file `.xlsx` vào vùng upload (hỗ trợ nhiều files)
-3. Chọn sheets muốn import → bấm **Xác nhận**
-4. Thiết bị sẽ xuất hiện trong danh sách
-
-### Quản lý thiết bị
-
-- **Xem chi tiết**: Click vào dòng trong bảng hoặc menu `⋯` → Xem chi tiết
-- **Chỉnh sửa**: Menu `⋯` → Chỉnh sửa (mở edit mode trực tiếp)
-- **Xuất file**: Menu `⋯` → Xuất file (tải xuống `.xlsx`)
-- **Xóa**: Menu `⋯` → Xóa (hiển thị xác nhận trước khi xóa)
-
-### Thao tác hàng loạt
-
-1. Tick checkbox nhiều thiết bị
-2. Toolbar xuất hiện → Đổi trạng thái / Xuất file / Xóa
-
-### Chỉnh sửa nâng cao
-
-- Trong edit mode: chỉnh sửa trực tiếp ô dữ liệu
-- Kéo thả icon ⋮⋮ để sắp xếp thứ tự tabs
-- Thêm sheet mới, thêm/xóa cột
-- Bấm **Lưu** để lưu và đóng modal
-
-### Undo / Redo
-
-- `Ctrl + Z` — Hoàn tác
-- `Ctrl + Y` — Làm lại
-- Hoặc sử dụng nút ↩️ ↪️ trên toolbar
-
----
-
-## 📝 Scripts
-
-| Script | Lệnh | Mô tả |
-|---|---|---|
-| Dev | `npm run dev` | Chạy development server (hot reload) |
-| Build | `npm run build` | Build production bundle |
-| Start | `npm start` | Chạy production server |
-| Lint | `npm run lint` | Kiểm tra lỗi code với ESLint |
-
----
-
-## 🗄️ Lưu trữ dữ liệu
-
-Ứng dụng sử dụng **IndexedDB** (thông qua `idb-keyval`) để lưu trữ dữ liệu trực tiếp trên trình duyệt:
-
-- ✅ **Không cần backend** — hoạt động hoàn toàn offline
-- ✅ **Dữ liệu persist** — vẫn còn sau khi refresh trang
-- ⚠️ **Lưu ý**: Dữ liệu chỉ tồn tại trên trình duyệt hiện tại. Xoá cache trình duyệt sẽ mất dữ liệu.
+Truy cập [http://localhost:3000](http://localhost:3000).
 
 ---
 
 ## 📄 License
+
+Dự án được phân phối theo giấy phép [MIT](./License.md).
 
 Dự án được phân phối theo giấy phép [MIT](./License.md).
 

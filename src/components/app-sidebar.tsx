@@ -10,7 +10,7 @@ import Link from "next/link"
 
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
-import { useDeviceList } from "@/hooks/useDevices"
+import { useDevicesQuery, useDeviceStatsQuery } from "@/hooks/useDevicesQuery"
 import { Badge } from "@/components/ui/badge"
 import { Logo } from "@/components/logo"
 import {
@@ -26,24 +26,15 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 
-const data = {
-  user: {
-    name: "IT Admin",
-    email: "store@example.com",
-    avatar: "",
-  },
-}
 
 // Mini stats component — ẩn khi sidebar collapsed (icon mode)
 function SidebarQuickStats() {
-  const devices = useDeviceList()
+  const { data: stats } = useDeviceStatsQuery()
   const { state } = useSidebar()
 
-  if (devices.length === 0 || state === "collapsed") return null
+  if (!stats || state === "collapsed") return null
 
-  const active = devices.filter(d => (d.status ?? 'active') === 'active').length
-  const broken = devices.filter(d => d.status === 'broken').length
-  const inactive = devices.filter(d => d.status === 'inactive').length
+  const { active, broken, inactive } = stats
 
   return (
     <SidebarGroup>
@@ -70,7 +61,7 @@ function SidebarQuickStats() {
 
 // Device count badge cho nav item
 function DeviceCountBadge() {
-  const devices = useDeviceList()
+  const { data: devices = [] } = useDevicesQuery()
   if (devices.length === 0) return null
   return (
     <Badge variant="secondary" className="ml-auto h-5 min-w-5 px-1.5 text-[10px] font-semibold">
@@ -151,7 +142,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         ))}
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser />
       </SidebarFooter>
     </Sidebar>
   )

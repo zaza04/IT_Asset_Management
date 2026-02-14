@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
+import { createClient } from '@/utils/supabase/server';
 
+// Đăng xuất — xóa Supabase session
 export async function POST() {
-    const response = NextResponse.json({ success: true });
+    const supabase = await createClient();
+    await supabase.auth.signOut();
 
-    // Clear the cookie
-    response.cookies.delete('token');
-
-    return response;
+    return NextResponse.json({ success: true });
 }

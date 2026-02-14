@@ -35,7 +35,20 @@ import { Device, DeviceInfo, DeviceStatus, DEVICE_STATUS_CONFIG, SHEET_NAMES } f
 import { SheetTable } from './SheetTable';
 import { Input } from '@/components/ui/input';
 import { useState, useCallback, useEffect } from 'react';
-import { useDeviceStore } from '@/stores/useDeviceStore';
+import {
+    useDeviceDetailQuery,
+    useUpdateDeviceMutation,
+    useUpdateStatusMutation,
+    useUpdateCellMutation,
+    useCreateSheetMutation,
+    useRenameSheetMutation,
+    useDeleteSheetMutation,
+    useReorderSheetsMutation,
+    useAddRowMutation,
+    useDeleteRowMutation,
+    useAddColumnMutation,
+    useUpdateDeviceVisibleSheetsMutation,
+} from '@/hooks/useDevicesQuery';
 import { SheetTabsCarousel } from '@/components/carousel/SheetTabsCarousel';
 import { InfoRow, EditField, SortableTab, DatabaseIcon } from './DeviceDetailHelpers';
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
@@ -91,18 +104,26 @@ export function DeviceDetail({
     const [isAddingSheet, setIsAddingSheet] = useState(false);
     const [newColumnName, setNewColumnName] = useState('');
     const [addingColumnSheet, setAddingColumnSheet] = useState<string | null>(null);
-    const updateDeviceVisibleSheets = useDeviceStore((s) => s.updateDeviceVisibleSheets);
-    const setDeviceStatus = useDeviceStore((s) => s.setDeviceStatus);
-    const updateSheetCell = useDeviceStore((s) => s.updateSheetCell);
-    const updateDeviceInfo = useDeviceStore((s) => s.updateDeviceInfo);
-    const duplicateDevice = useDeviceStore((s) => s.duplicateDevice);
-    const addSheet = useDeviceStore((s) => s.addSheet);
-    const removeSheet = useDeviceStore((s) => s.removeSheet);
-    const renameSheet = useDeviceStore((s) => s.renameSheet);
-    const addSheetRow = useDeviceStore((s) => s.addSheetRow);
-    const removeSheetRows = useDeviceStore((s) => s.removeSheetRows);
-    const addSheetColumn = useDeviceStore((s) => s.addSheetColumn);
-    const reorderSheets = useDeviceStore((s) => s.reorderSheets);
+
+    // Fetch full data with sheets if we have an ID
+    const { data: detailData, isLoading: isDetailLoading } = useDeviceDetailQuery(device?.id ?? null);
+
+    // Use full device data if available, otherwise fallback to prop (incomplete)
+    const fullDevice = detailData?.device ?? device;
+    const sheetIdMap = detailData?.sheetIdMap ?? {};
+
+    // React Query mutations — thay thế useDeviceStore
+    const updateDeviceMutation = useUpdateDeviceMutation();
+    const updateStatusMutation = useUpdateStatusMutation();
+    const updateCellMutation = useUpdateCellMutation();
+    const createSheetMutation = useCreateSheetMutation();
+    const renameSheetMutation = useRenameSheetMutation();
+    const deleteSheetMutation = useDeleteSheetMutation();
+    const reorderSheetsMutation = useReorderSheetsMutation();
+    const addRowMutation = useAddRowMutation();
+    const deleteRowMutation = useDeleteRowMutation();
+    const addColumnMutation = useAddColumnMutation();
+    const updateVisibleSheetsMutation = useUpdateDeviceVisibleSheetsMutation();
 
     // Đồng bộ mode khi mở modal hoặc đổi initialMode
     useEffect(() => {
@@ -114,11 +135,11 @@ export function DeviceDetail({
 
     // Tự động populate form khi vào Edit mode — không cần click pencil nữa
     useEffect(() => {
-        if (isEditMode && device) {
-            setEditForm({ ...device.deviceInfo });
+        if (isEditMode && fullDevice) {
+            setEditForm({ ...fullDevice.deviceInfo });
             setIsEditing(true);
         }
-    }, [isEditMode, device]);
+    }, [isEditMode, fullDevice]);
 
     // Cảnh báo khi đóng tab/trình duyệt trong edit mode
     useEffect(() => {
@@ -137,16 +158,20 @@ export function DeviceDetail({
 
     // Edit mode handlers
     const startEditing = useCallback(() => {
-        if (!device) return;
-        setEditForm({ ...device.deviceInfo });
+        if (!fullDevice) return;
+        setEditForm({ ...fullDevice.deviceInfo });
         setIsEditing(true);
-    }, [device]);
+    }, [fullDevice]);
 
     const saveEditing = useCallback(() => {
-        if (!device) return;
-        updateDeviceInfo(device.id, editForm);
+        if (!fullDevice) return;
+        // Gọi Server Action cập nhật thông tin thiết bị
+        updateDeviceMutation.mutate({
+            deviceId: fullDevice.id,
+            updates: editForm,
+        });
         setIsEditing(false);
-    }, [device, editForm, updateDeviceInfo]);
+    }, [fullDevice, editForm, updateDeviceMutation]);
 
     const cancelEditing = useCallback(() => {
         setIsEditing(false);
@@ -155,32 +180,55 @@ export function DeviceDetail({
 
     // Kéo thả sắp xếp tabs
     const handleDragEnd = useCallback((event: DragEndEvent) => {
-        if (!device) return;
+        if (!fullDevice) return;
         const { active, over } = event;
         if (!over || active.id === over.id) return;
-        const keys = Object.keys(device.sheets);
+
+        const keys = Object.keys(fullDevice.sheets);
         const oldIndex = keys.indexOf(active.id as string);
         const newIndex = keys.indexOf(over.id as string);
+
         if (oldIndex === -1 || newIndex === -1) return;
-        reorderSheets(device.id, arrayMove(keys, oldIndex, newIndex));
-    }, [device, reorderSheets]);
 
-    if (!device) return null;
+        // Convert ordered names to IDs
+        const newOrderNames = arrayMove(keys, oldIndex, newIndex);
+        const newOrderIds = newOrderNames.map(name => sheetIdMap[name]).filter(Boolean); // Filter undefined
 
-    const allSheetKeys = Object.keys(device.sheets);
-    const visibleSheets = device.metadata.visibleSheets ?? allSheetKeys;
+        if (newOrderIds.length !== newOrderNames.length) {
+            console.error("Missing sheet IDs during reorder");
+            return;
+        }
+
+        reorderSheetsMutation.mutate({
+            deviceId: fullDevice.id,
+            sheetIds: newOrderIds,
+        });
+    }, [fullDevice, sheetIdMap, reorderSheetsMutation]);
+
+    if (!fullDevice) return null;
+
+    const allSheetKeys = Object.keys(fullDevice.sheets);
+    const visibleSheets = fullDevice.metadata.visibleSheets ?? allSheetKeys;
     const displayedSheets = allSheetKeys.filter((s) => visibleSheets.includes(s));
 
+    // TODO: Implement UI for toggling sheet visibility
+    /*
     const toggleSheetVisibility = (sheet: string) => {
-        const current = device.metadata.visibleSheets ?? allSheetKeys;
+        const current = fullDevice.metadata.visibleSheets ?? allSheetKeys;
         const updated = current.includes(sheet)
             ? current.filter((s) => s !== sheet)
             : [...current, sheet];
         if (updated.length === 0) return;
-        updateDeviceVisibleSheets(device.id, updated);
-    };
+        if (updated.length === 0) return;
 
-    const status = device.status ?? 'active';
+        updateVisibleSheetsMutation.mutate({
+            deviceId: fullDevice.id,
+            visibleSheets: updated,
+        });
+    };
+    */
+
+    const status = fullDevice.status ?? 'active';
     const statusConfig = DEVICE_STATUS_CONFIG[status];
 
     return (
@@ -188,7 +236,7 @@ export function DeviceDetail({
             <DialogContent className="sm:max-w-[90vw] w-full h-[90vh] flex flex-row p-0 gap-0 overflow-hidden overscroll-contain">
                 {/* Accessible title — ẩn cho screen reader */}
                 <VisuallyHidden.Root>
-                    <DialogTitle>{device.deviceInfo.name}</DialogTitle>
+                    <DialogTitle>{fullDevice.deviceInfo.name}</DialogTitle>
                 </VisuallyHidden.Root>
 
                 {/* Toggle View ↔ Edit — góc trên trái */}
@@ -254,7 +302,7 @@ export function DeviceDetail({
                                     />
                                 ) : (
                                     <h2 className="text-base font-bold leading-snug break-words">
-                                        {device.deviceInfo.name}
+                                        {fullDevice.deviceInfo.name}
                                     </h2>
                                 )}
                             </div>
@@ -262,7 +310,7 @@ export function DeviceDetail({
                             {isEditMode ? (
                                 <Select
                                     value={status}
-                                    onValueChange={(val) => setDeviceStatus(device.id, val as DeviceStatus)}
+                                    onValueChange={(val) => updateStatusMutation.mutate({ deviceId: fullDevice.id, status: val as DeviceStatus })}
                                 >
                                     <SelectTrigger className="w-full h-8 text-xs">
                                         <SelectValue>
@@ -304,11 +352,12 @@ export function DeviceDetail({
                                 </div>
                             ) : (
                                 <>
-                                    <InfoRow icon={<Laptop className="h-3.5 w-3.5" />} label="OS" value={device.deviceInfo.os} />
-                                    <InfoRow icon={<Cpu className="h-3.5 w-3.5" />} label="CPU" value={device.deviceInfo.cpu} />
-                                    <InfoRow icon={<HardDrive className="h-3.5 w-3.5" />} label="RAM" value={device.deviceInfo.ram} />
-                                    <InfoRow icon={<Monitor className="h-3.5 w-3.5" />} label="Arch" value={device.deviceInfo.architecture} />
-                                    <InfoRow icon={<Network className="h-3.5 w-3.5" />} label="MAC" value={device.deviceInfo.mac || 'Không có'} />
+
+                                    <InfoRow icon={<Laptop className="h-3.5 w-3.5" />} label="OS" value={fullDevice.deviceInfo.os} />
+                                    <InfoRow icon={<Cpu className="h-3.5 w-3.5" />} label="CPU" value={fullDevice.deviceInfo.cpu} />
+                                    <InfoRow icon={<HardDrive className="h-3.5 w-3.5" />} label="RAM" value={fullDevice.deviceInfo.ram} />
+                                    <InfoRow icon={<Monitor className="h-3.5 w-3.5" />} label="Arch" value={fullDevice.deviceInfo.architecture} />
+                                    <InfoRow icon={<Network className="h-3.5 w-3.5" />} label="MAC" value={fullDevice.deviceInfo.mac || 'Không có'} />
                                 </>
                             )}
                         </div>
@@ -321,15 +370,15 @@ export function DeviceDetail({
                             <div className="space-y-1.5 text-sm">
                                 <div className="flex items-center gap-2 text-muted-foreground">
                                     <Calendar className="h-3.5 w-3.5" />
-                                    <span className="text-xs">{device.deviceInfo.lastUpdate}</span>
+                                    <span className="text-xs">{fullDevice.deviceInfo.lastUpdate}</span>
                                 </div>
                                 <div className="flex items-center gap-2 text-muted-foreground">
                                     <DatabaseIcon className="h-3.5 w-3.5" />
-                                    <span className="text-xs">{device.metadata.fileSize}</span>
+                                    <span className="text-xs">{fullDevice.metadata.fileSize}</span>
                                 </div>
                                 <div className="flex items-center gap-2 text-muted-foreground">
                                     <SlidersHorizontal className="h-3.5 w-3.5" />
-                                    <span className="text-xs">{device.metadata.totalSheets} sheet • {device.metadata.totalRows} dòng</span>
+                                    <span className="text-xs">{fullDevice.metadata.totalSheets} sheet • {fullDevice.metadata.totalRows} dòng</span>
                                 </div>
                             </div>
                         </div>
@@ -339,16 +388,11 @@ export function DeviceDetail({
                         {/* Actions — Export, Duplicate, Delete */}
                         <div className="space-y-2">
                             <div className={`grid gap-2 ${isEditMode ? 'grid-cols-2' : 'grid-cols-1'}`}>
-                                <Button variant="outline" size="sm" className="w-full" onClick={() => onExport(device)}>
+                                <Button variant="outline" size="sm" className="w-full" onClick={() => onExport(fullDevice)}>
                                     <Download className="mr-1.5 h-3.5 w-3.5" />
                                     Xuất file
                                 </Button>
-                                {isEditMode && (
-                                    <Button variant="outline" size="sm" className="w-full" onClick={() => duplicateDevice(device.id)}>
-                                        <Copy className="mr-1.5 h-3.5 w-3.5" />
-                                        Nhân bản
-                                    </Button>
-                                )}
+                                {/* Duplicate tạm ẩn — cần Server Action riêng */}
                             </div>
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
@@ -369,7 +413,7 @@ export function DeviceDetail({
                                         <AlertDialogAction
                                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                             onClick={() => {
-                                                onDelete(device.id);
+                                                onDelete(fullDevice.id);
                                                 onClose();
                                             }}
                                         >
@@ -399,21 +443,36 @@ export function DeviceDetail({
                                                         key={sheetName}
                                                         id={sheetName}
                                                         label={getDisplayName(sheetName)}
-                                                        count={device.sheets[sheetName]?.length ?? 0}
+                                                        count={fullDevice.sheets[sheetName]?.length ?? 0}
                                                         isActive={(activeSheet || displayedSheets[0]) === sheetName}
                                                         onRename={() => {
                                                             const newName = prompt('Đổi tên sheet:', sheetName);
                                                             if (newName) {
-                                                                renameSheet(device.id, sheetName, newName);
-                                                                // Cập nhật activeSheet nếu rename sheet đang active
-                                                                if (activeSheet === sheetName) setActiveSheet(newName);
+                                                                const sheetId = sheetIdMap[sheetName];
+                                                                if (sheetId) {
+                                                                    renameSheetMutation.mutate({
+                                                                        deviceId: fullDevice.id,
+                                                                        sheetId: sheetId,
+                                                                        newName,
+                                                                    });
+                                                                    if (activeSheet === sheetName) setActiveSheet(newName);
+                                                                } else {
+                                                                    console.error("Missing sheetId for rename");
+                                                                }
                                                             }
                                                         }}
                                                         onDelete={allSheetKeys.length > 1 ? () => {
                                                             if (confirm(`Xóa sheet "${getDisplayName(sheetName)}"?`)) {
-                                                                removeSheet(device.id, sheetName);
-                                                                // Reset activeSheet nếu đang xóa sheet đang hiển thị
-                                                                if (activeSheet === sheetName) setActiveSheet(null);
+                                                                const sheetId = sheetIdMap[sheetName];
+                                                                if (sheetId) {
+                                                                    deleteSheetMutation.mutate({
+                                                                        deviceId: fullDevice.id,
+                                                                        sheetId: sheetId,
+                                                                    });
+                                                                    if (activeSheet === sheetName) setActiveSheet(null);
+                                                                } else {
+                                                                    console.error("Missing sheetId for delete");
+                                                                }
                                                             }
                                                         } : undefined}
                                                     />
@@ -425,7 +484,10 @@ export function DeviceDetail({
                                                         onSubmit={(e) => {
                                                             e.preventDefault();
                                                             if (newSheetName.trim()) {
-                                                                addSheet(device.id, newSheetName);
+                                                                createSheetMutation.mutate({
+                                                                    deviceId: fullDevice.id,
+                                                                    sheetName: newSheetName,
+                                                                });
                                                                 setNewSheetName('');
                                                             }
                                                             setIsAddingSheet(false);
@@ -463,7 +525,7 @@ export function DeviceDetail({
                                         activeSheet={activeSheet || displayedSheets[0] || ''}
                                         onSelectSheet={setActiveSheet}
                                         getDisplayName={getDisplayName}
-                                        getCount={(sheet) => device.sheets[sheet]?.length ?? 0}
+                                        getCount={(sheet) => fullDevice.sheets[sheet]?.length ?? 0}
                                         slidesToShow={5}
                                     />
                                 )}
@@ -497,15 +559,27 @@ export function DeviceDetail({
                                 <TabsContent key={sheetName} value={sheetName} className="flex-1 p-0 m-0 min-h-0 data-[state=active]:flex flex-col relative">
                                     <div className="absolute inset-0 p-4 flex flex-col">
                                         <div className="flex-1 rounded-md border bg-card shadow-sm overflow-hidden">
-                                            {device.sheets[sheetName]?.length > 0 ? (
+                                            {fullDevice.sheets[sheetName]?.length > 0 ? (
                                                 <SheetTable
-                                                    data={device.sheets[sheetName]}
+                                                    data={fullDevice.sheets[sheetName]}
                                                     sheetName={sheetName}
-                                                    deviceId={device.id}
+                                                    deviceId={fullDevice.id}
                                                     readOnly={!isEditMode}
-                                                    onCellUpdate={(rowIndex, column, value) =>
-                                                        updateSheetCell(device.id, sheetName, rowIndex, column, value)
-                                                    }
+                                                    onCellUpdate={(rowIndex, column, value) => {
+                                                        const sheetId = sheetIdMap[sheetName];
+                                                        if (!sheetId) {
+                                                            console.error("Missing sheetId for update cell");
+                                                            return;
+                                                        }
+                                                        updateCellMutation.mutate({
+                                                            deviceId: fullDevice.id,
+                                                            sheetId: sheetId,
+                                                            sheetName,
+                                                            rowIndex,
+                                                            columnKey: column,
+                                                            value,
+                                                        });
+                                                    }}
                                                 />
                                             ) : (
                                                 <div className="h-full flex flex-col items-center justify-center text-center p-6">
@@ -519,8 +593,21 @@ export function DeviceDetail({
                                                                 onSubmit={(e) => {
                                                                     e.preventDefault();
                                                                     if (newColumnName.trim()) {
-                                                                        addSheetColumn(device.id, sheetName, newColumnName);
-                                                                        addSheetRow(device.id, sheetName);
+                                                                        const sheetId = sheetIdMap[sheetName];
+                                                                        if (!sheetId) {
+                                                                            console.error("Missing sheetId for add column");
+                                                                            return;
+                                                                        }
+                                                                        addColumnMutation.mutate({
+                                                                            deviceId: fullDevice.id,
+                                                                            sheetId: sheetId,
+                                                                            columnName: newColumnName,
+                                                                            sheetData: fullDevice.sheets[sheetName] ?? []
+                                                                        });
+                                                                        addRowMutation.mutate({
+                                                                            deviceId: fullDevice.id,
+                                                                            sheetId: sheetId,
+                                                                        });
                                                                         setNewColumnName('');
                                                                     }
                                                                     setAddingColumnSheet(null);
@@ -549,13 +636,20 @@ export function DeviceDetail({
                                             )}
                                         </div>
                                         {/* Action bar dưới table — chỉ hiện ở Edit mode */}
-                                        {isEditMode && device.sheets[sheetName]?.length > 0 && (
+                                        {isEditMode && fullDevice.sheets[sheetName]?.length > 0 && (
                                             <div className="flex items-center gap-2 pt-2">
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
                                                     className="h-7 text-xs"
-                                                    onClick={() => addSheetRow(device.id, sheetName)}
+                                                    onClick={() => {
+                                                        const sheetId = sheetIdMap[sheetName];
+                                                        if (!sheetId) {
+                                                            console.error("Missing sheetId for add row");
+                                                            return;
+                                                        }
+                                                        addRowMutation.mutate({ deviceId: fullDevice.id, sheetId: sheetId });
+                                                    }}
                                                 >
                                                     <Plus className="mr-1 h-3 w-3" />
                                                     Thêm dòng
@@ -566,7 +660,17 @@ export function DeviceDetail({
                                                         onSubmit={(e) => {
                                                             e.preventDefault();
                                                             if (newColumnName.trim()) {
-                                                                addSheetColumn(device.id, sheetName, newColumnName);
+                                                                const sheetId = sheetIdMap[sheetName];
+                                                                if (!sheetId) {
+                                                                    console.error("Missing sheetId for add column");
+                                                                    return;
+                                                                }
+                                                                addColumnMutation.mutate({
+                                                                    deviceId: fullDevice.id,
+                                                                    sheetId: sheetId,
+                                                                    columnName: newColumnName,
+                                                                    sheetData: fullDevice.sheets[sheetName] ?? []
+                                                                });
                                                                 setNewColumnName('');
                                                             }
                                                             setAddingColumnSheet(null);

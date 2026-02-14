@@ -5,7 +5,7 @@ import { HardwareOverview } from "@/components/dashboard/HardwareOverview"
 import { RecentActivity } from "@/components/dashboard/RecentActivity"
 import { DeviceStatusChart } from "@/components/dashboard/DeviceStatusChart"
 import { OSDistributionChart } from "@/components/dashboard/OSDistributionChart"
-import { useDeviceList } from "@/hooks/useDevices"
+import { useDevicesQuery } from "@/hooks/useDevicesQuery"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -18,7 +18,7 @@ import { Upload, LayoutDashboard } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 export function DeviceDashboardClient() {
-  const devices = useDeviceList()
+  const { data: devices = [] } = useDevicesQuery()
   const router = useRouter()
 
   // Empty dashboard state

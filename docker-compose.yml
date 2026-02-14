@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  app:
+    container_name: device-dashboard-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/device_dashboard
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+    depends_on:
+      - db
+    networks:
+      - device-network
+
+  db:
+    container_name: device-dashboard-db
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: device_dashboard
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./docker/data:/var/lib/postgresql/data
+      - ./docker/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - device-network
+
+networks:
+  device-network:
+    driver: bridge

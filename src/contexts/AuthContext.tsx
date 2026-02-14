@@ -1,16 +1,15 @@
 "use client"
 
-import React, { createContext, useContext, useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import type { User, LoginCredentials } from '@/lib/auth'
-import * as authLib from '@/lib/auth'
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react'
+import { useRouter, usePathname } from 'next/navigation'
+import { createClient } from '@/utils/supabase/client'
+import { User } from '@supabase/supabase-js'
 
 interface AuthContextType {
     user: User | null
     isAuthenticated: boolean
     isLoading: boolean
-    login: (credentials: LoginCredentials) => Promise<void>
-    logout: () => void
+    logout: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -19,32 +18,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null)
     const [isLoading, setIsLoading] = useState(true)
     const router = useRouter()
+    const pathname = usePathname()
 
-    // Check session on mount
+    // Memoize Supabase client — tránh tạo instance mới mỗi render
+    const supabase = useMemo(() => createClient(), [])
+
+    // Re-check user mỗi khi route thay đổi
+    // Giải quyết: server action sign-in → redirect → client cần đọc lại cookies
     useEffect(() => {
-        async function initAuth() {
+        const checkUser = async () => {
             try {
-                const userData = await authLib.checkSession()
-                setUser(userData)
+                const { data: { user: currentUser } } = await supabase.auth.getUser()
+                setUser(currentUser)
+            } catch {
+                setUser(null)
             } finally {
                 setIsLoading(false)
             }
         }
-        initAuth()
-    }, [])
+        checkUser()
+    }, [pathname, supabase])
 
-    const login = async (credentials: LoginCredentials) => {
-        await authLib.login(credentials)
-        const userData = await authLib.checkSession()
-        setUser(userData)
-        router.push('/devices')
-    }
+    // Listener cho auth state changes (tab switch, token refresh, client-side auth)
+    useEffect(() => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+            async (event, session) => {
+                setUser(session?.user ?? null)
+                setIsLoading(false)
+
+                if (event === 'SIGNED_IN') {
+                    router.refresh()
+                }
+
+                if (event === 'SIGNED_OUT') {
+                    router.push('/sign-in')
+                }
+            }
+        )
+
+        return () => subscription.unsubscribe()
+    }, [supabase, router])
 
     const logout = async () => {
-        await authLib.logout()
-        setUser(null)
-        // Router push is handled in authLib or we can do it here
-        router.push('/sign-in')
+        setIsLoading(true)
+        await supabase.auth.signOut()
     }
 
     return (
@@ -53,7 +70,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 user,
                 isAuthenticated: !!user,
                 isLoading,
-                login,
                 logout,
             }}
         >
@@ -61,6 +77,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         </AuthContext.Provider>
     )
 }
+
 
 export function useAuth() {
     const context = useContext(AuthContext)

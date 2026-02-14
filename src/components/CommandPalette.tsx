@@ -11,7 +11,7 @@ import {
     CommandSeparator,
 } from '@/components/ui/command';
 import { useRouter } from 'next/navigation';
-import { useDeviceStore } from '@/stores/useDeviceStore';
+import { useDevicesQuery } from '@/hooks/useDevicesQuery';
 import {
     Monitor,
     Settings,
@@ -27,7 +27,7 @@ import { useTheme } from 'next-themes';
 export function CommandPalette() {
     const [open, setOpen] = useState(false);
     const router = useRouter();
-    const devices = useDeviceStore((s) => s.devices);
+    const { data: devices = [] } = useDevicesQuery();
     const { setTheme, theme } = useTheme();
 
     // Cmd+K / Ctrl+K to open

@@ -27,7 +27,7 @@ import {
     AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Device, DeviceStatus, DEVICE_STATUS_CONFIG } from '@/types/device';
-import { useDeviceStore } from '@/stores/useDeviceStore';
+import { useUpdateStatusMutation } from '@/hooks/useDevicesQuery';
 import { FilterBar, DeviceFilters } from './FilterBar';
 import { createDeviceColumns, STATUS_DOT_COLORS } from './device-columns';
 import { isWithinInterval, parseISO } from 'date-fns';
@@ -73,7 +73,7 @@ export function DeviceList({
         }
     }, [highlightId]);
 
-    const setDeviceStatus = useDeviceStore((s) => s.setDeviceStatus);
+    const updateStatusMutation = useUpdateStatusMutation();
 
     // Comprehensive filter logic — tìm theo tên, id, fileName, IP + status + date range
     const filteredDevices = useMemo(() => {
@@ -168,7 +168,7 @@ export function DeviceList({
                         {/* Bulk set status */}
                         <Select onValueChange={(val) => {
                             const selectedRows = table.getFilteredSelectedRowModel().rows;
-                            selectedRows.forEach((row) => setDeviceStatus(row.original.id, val as DeviceStatus));
+                            selectedRows.forEach((row) => updateStatusMutation.mutate({ deviceId: row.original.id, status: val as DeviceStatus }));
                             setRowSelection({});
                         }}>
                             <SelectTrigger className="w-[150px] h-8 text-xs">

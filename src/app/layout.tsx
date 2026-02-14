@@ -14,6 +14,7 @@ export const metadata: Metadata = {
 };
 
 import { AuthProvider } from "@/contexts/AuthContext";
+import { QueryProvider } from "@/providers/QueryProvider";
 
 export default function RootLayout({
   children,
@@ -29,11 +30,13 @@ export default function RootLayout({
       <body className={inter.className} suppressHydrationWarning={true}>
         <ThemeProvider defaultTheme="system" storageKey="nextjs-ui-theme">
           <AuthProvider>
-            <SidebarConfigProvider>
-              {children}
-              <CommandPalette />
-              <Toaster />
-            </SidebarConfigProvider>
+            <QueryProvider>
+              <SidebarConfigProvider>
+                {children}
+                <CommandPalette />
+                <Toaster />
+              </SidebarConfigProvider>
+            </QueryProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

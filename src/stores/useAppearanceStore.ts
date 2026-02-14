@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { indexedDBStorage } from '@/lib/indexeddb-storage';
+
 import type { ImportedTheme } from '@/types/theme-customizer';
 
 interface AppearanceState {
@@ -68,7 +68,7 @@ export const useAppearanceStore = create<AppearanceState>()(
         }),
         {
             name: 'appearance-storage',
-            storage: indexedDBStorage,
+            // Default storage is localStorage, which is fine for UI preferences
         }
     )
 );

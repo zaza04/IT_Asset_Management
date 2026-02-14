@@ -24,17 +24,38 @@ import {
 } from "@/components/ui/sidebar"
 import { useAuth } from "@/contexts/AuthContext"
 
-export function NavUser({
-  user,
-}: {
-  user: {
-    name: string
-    email: string
-    avatar: string
-  }
-}) {
+// Parse display name từ email — capitalize chữ cái đầu
+function getDisplayName(email: string | undefined): string {
+  if (!email) return "User"
+  // Lấy phần trước @ và capitalize
+  const username = email.split("@")[0]
+  return username.charAt(0).toUpperCase() + username.slice(1)
+}
+
+export function NavUser() {
   const { isMobile } = useSidebar()
-  const { logout } = useAuth()
+  const { user, isLoading, logout } = useAuth()
+
+  // Lấy thông tin từ Supabase Auth user object
+  const displayName = user?.user_metadata?.full_name || getDisplayName(user?.email)
+  const displayEmail = user?.email || ""
+
+  // Hiện skeleton cho đến khi có user data thực sự — tránh flash "User" sau redirect
+  if (isLoading || !user) {
+    return (
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <SidebarMenuButton size="lg" className="animate-pulse">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted" />
+            <div className="grid flex-1 gap-1">
+              <div className="h-3 w-20 rounded bg-muted" />
+              <div className="h-2 w-28 rounded bg-muted" />
+            </div>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    )
+  }
 
   return (
     <SidebarMenu>
@@ -49,9 +70,9 @@ export function NavUser({
                 <CircleUser className="size-5" />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{user.name}</span>
+                <span className="truncate font-medium">{displayName}</span>
                 <span className="text-muted-foreground truncate text-xs">
-                  {user.email}
+                  {displayEmail}
                 </span>
               </div>
               <EllipsisVertical className="ml-auto size-4" />
@@ -69,9 +90,9 @@ export function NavUser({
                   <CircleUser className="size-5" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{user.name}</span>
+                  <span className="truncate font-medium">{displayName}</span>
                   <span className="text-muted-foreground truncate text-xs">
-                    {user.email}
+                    {displayEmail}
                   </span>
                 </div>
               </div>
@@ -99,3 +120,4 @@ export function NavUser({
     </SidebarMenu>
   )
 }
+

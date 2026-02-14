@@ -12,7 +12,7 @@ export default function HomePage() {
   useEffect(() => {
     if (!isLoading) {
       if (isAuthenticated) {
-        router.push("/dashboard")
+        router.push("/devices")
       } else {
         router.push("/sign-in")
       }

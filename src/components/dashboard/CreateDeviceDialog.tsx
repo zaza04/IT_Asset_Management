@@ -30,7 +30,7 @@ import {
     FormMessage,
 } from '@/components/ui/form';
 import { DeviceStatus, DEVICE_STATUS_CONFIG } from '@/types/device';
-import { useDeviceStore } from '@/stores/useDeviceStore';
+import { useCreateDeviceMutation } from '@/hooks/useDevicesQuery';
 import { Monitor, Cpu, HardDrive, Laptop, Network, Loader2 } from 'lucide-react';
 
 interface CreateDeviceDialogProps {
@@ -73,7 +73,7 @@ const INITIAL_VALUES: FormValues = {
 
 export function CreateDeviceDialog({ isOpen, onClose, onCreated }: CreateDeviceDialogProps) {
     const [isCreating, setIsCreating] = useState(false);
-    const createDevice = useDeviceStore((s) => s.createDevice);
+    const createMutation = useCreateDeviceMutation();
 
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
@@ -83,24 +83,22 @@ export function CreateDeviceDialog({ isOpen, onClose, onCreated }: CreateDeviceD
     const onSubmit = async (values: FormValues) => {
         setIsCreating(true);
         try {
-            const device = createDevice({
+            // Gọi Server Action qua React Query mutation
+            const result = await createMutation.mutateAsync({
                 name: values.name,
-                os: values.os,
-                cpu: values.cpu,
-                ram: values.ram,
-                architecture: values.architecture,
-                ip: values.ip,
-                mac: values.mac,
+                os: values.os || '',
+                cpu: values.cpu || '',
+                ram: values.ram || '',
+                architecture: values.architecture || '',
+                ip: values.ip || '',
+                mac: values.mac || '',
+                status: values.status as DeviceStatus,
             });
-
-            // Set status nếu khác default
-            if (values.status !== 'active') {
-                useDeviceStore.getState().setDeviceStatus(device.id, values.status);
-            }
 
             form.reset(INITIAL_VALUES);
             onClose();
-            onCreated?.(device.id);
+            // Server trả về device.id (UUID)
+            onCreated?.(result.id);
         } finally {
             setIsCreating(false);
         }

@@ -1,13 +1,12 @@
 "use client";
 
-import { useDevices } from '@/hooks/useDevices';
 import { ImportDevice } from '@/components/dashboard/ImportDevice';
 import { DeviceList } from '@/components/dashboard/DeviceList';
 import { DeviceDetail } from '@/components/dashboard/DeviceDetail';
 import { SheetSelectionDialog } from '@/components/dashboard/SheetSelectionDialog';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Upload, CheckCircle2, XCircle, Undo2, Redo2, Plus } from 'lucide-react';
+import { Upload, Plus, Loader2 } from 'lucide-react';
 import { useState, useCallback, useEffect } from 'react';
 import {
     Dialog,
@@ -17,62 +16,53 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog"
 import { Device } from '@/types/device';
-import { useDeviceStore, useTemporalStore } from '@/stores/useDeviceStore';
 import { CreateDeviceDialog } from '@/components/dashboard/CreateDeviceDialog';
+import { toast } from 'sonner';
+
+// Hooks mới — React Query cho data, UIStore cho UI state
+import {
+    useDevicesQuery,
+    useDeleteDeviceMutation,
+    useImportDeviceMutation,
+} from '@/hooks/useDevicesQuery';
+import { useUIStore } from '@/stores/useUIStore';
+import { parseExcelForImport, exportDeviceToExcel } from '@/lib/excel-import';
 
 export default function DevicesPage() {
-    const {
-        devices,
-        selectedDevice,
-        setSelectedDevice,
-        isLoading,
-        addDevice,
-        addMultipleDevices,
-        removeDevice,
-        exportDevice,
-    } = useDevices();
+    // Data từ Supabase qua React Query
+    const { data: devices = [], isLoading } = useDevicesQuery();
 
-    const importProgress = useDeviceStore((s) => s.importProgress);
+    // Mutations
+    const deleteMutation = useDeleteDeviceMutation();
+    const importMutation = useImportDeviceMutation();
 
-    // Undo/Redo — reactive subscription thay vì getState()
-    const { undo, redo, pastStates, futureStates } = useTemporalStore((state) => state);
-    const canUndo = pastStates.length > 0;
-    const canRedo = futureStates.length > 0;
-
-    // Keyboard shortcut: Ctrl+Z / Ctrl+Y
-    useEffect(() => {
-        const handler = (e: KeyboardEvent) => {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
-                e.preventDefault();
-                undo();
-            }
-            if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
-                e.preventDefault();
-                redo();
-            }
-        };
-        window.addEventListener('keydown', handler);
-        return () => window.removeEventListener('keydown', handler);
-    }, [undo, redo]);
+    // UI state
+    const { highlightId, setHighlightId, isImporting, setImporting } = useUIStore();
 
     const [isDetailOpen, setIsDetailOpen] = useState(false);
     const [detailMode, setDetailMode] = useState<'view' | 'edit'>('view');
+    const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
     const [isImportOpen, setIsImportOpen] = useState(false);
     const [isCreateOpen, setIsCreateOpen] = useState(false);
+
     // Files chờ chọn sheet
     const [pendingFiles, setPendingFiles] = useState<File[]>([]);
     const [isSheetSelectOpen, setIsSheetSelectOpen] = useState(false);
 
-    // Highlight newly created device
-    const [highlightId, setHighlightId] = useState<string | null>(null);
+    // Import progress state (local cho UI)
+    const [importProgress, setImportProgress] = useState({
+        current: 0,
+        total: 0,
+        isImporting: false,
+    });
 
-    // Auto-clear highlight after 3 seconds
+    // Auto-clear highlight sau 3 giây
     useEffect(() => {
         if (highlightId) {
             const timer = setTimeout(() => setHighlightId(null), 3000);
             return () => clearTimeout(timer);
         }
-    }, [highlightId]);
+    }, [highlightId, setHighlightId]);
 
     const handleViewDevice = (device: Device) => {
         setSelectedDevice(device);
@@ -91,6 +81,20 @@ export default function DevicesPage() {
         setSelectedDevice(null);
     };
 
+    // Export device — cần resolve sheets từ detail query
+    const handleExportDevice = useCallback((device: Device) => {
+        if (Object.keys(device.sheets).length > 0) {
+            exportDeviceToExcel(device.deviceInfo.name, device.sheets);
+        } else {
+            toast.info("Mở chi tiết thiết bị trước khi xuất file");
+        }
+    }, []);
+
+    // Delete device
+    const handleDeleteDevice = useCallback((deviceId: string) => {
+        deleteMutation.mutate(deviceId);
+    }, [deleteMutation]);
+
     // Khi user drop/chọn files → mở Sheet Selection Dialog
     const handleFilesSelected = useCallback((files: File[]) => {
         setPendingFiles(files);
@@ -102,30 +106,52 @@ export default function DevicesPage() {
     const handleSheetConfirm = useCallback(async (selectedSheets: string[]) => {
         setIsSheetSelectOpen(false);
 
-        if (pendingFiles.length === 1) {
-            await addDevice(pendingFiles[0], selectedSheets);
-        } else {
-            await addMultipleDevices(pendingFiles, selectedSheets);
-        }
+        const filesToImport = pendingFiles;
         setPendingFiles([]);
-    }, [pendingFiles, addDevice, addMultipleDevices]);
+
+        // Import progress tracking
+        setImportProgress({
+            current: 0,
+            total: filesToImport.length,
+            isImporting: true,
+        });
+        setImporting(true);
+
+        for (let i = 0; i < filesToImport.length; i++) {
+            try {
+                // Parse Excel client-side → chuẩn bị data cho Server Action
+                const parsed = await parseExcelForImport(filesToImport[i], selectedSheets);
+                // Upload lên server qua Server Action
+                const result = await importMutation.mutateAsync(parsed);
+                // Highlight device mới
+                if (result) {
+                    setHighlightId(result.id);
+                }
+            } catch (error) {
+                toast.error(`Import thất bại: ${filesToImport[i].name}`, {
+                    description: error instanceof Error ? error.message : "Lỗi không xác định",
+                });
+            }
+            setImportProgress((prev) => ({
+                ...prev,
+                current: i + 1,
+            }));
+        }
+
+        setImportProgress((prev) => ({ ...prev, isImporting: false }));
+        setImporting(false);
+    }, [pendingFiles, importMutation, setHighlightId, setImporting]);
 
     return (
         <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
             <div className="flex items-center justify-between space-y-2">
                 <h2 className="text-3xl font-bold tracking-tight">Thiết bị</h2>
                 <div className="flex items-center space-x-2">
-                    <Button variant="outline" size="icon" onClick={() => undo()} disabled={!canUndo} title="Hoàn tác (Ctrl+Z)" aria-label="Hoàn tác">
-                        <Undo2 className="h-4 w-4" />
-                    </Button>
-                    <Button variant="outline" size="icon" onClick={() => redo()} disabled={!canRedo} title="Làm lại (Ctrl+Y)" aria-label="Làm lại">
-                        <Redo2 className="h-4 w-4" />
-                    </Button>
-                    <Button variant="outline" onClick={() => setIsCreateOpen(true)} disabled={importProgress.isImporting}>
+                    <Button variant="outline" onClick={() => setIsCreateOpen(true)} disabled={isImporting}>
                         <Plus className="mr-2 h-4 w-4" />
                         Tạo mới
                     </Button>
-                    <Button onClick={() => setIsImportOpen(true)} disabled={importProgress.isImporting}>
+                    <Button onClick={() => setIsImportOpen(true)} disabled={isImporting}>
                         <Upload className="mr-2 h-4 w-4" />
                         Import Excel
                     </Button>
@@ -139,20 +165,6 @@ export default function DevicesPage() {
                         <span className="font-medium">
                             Đang import… {importProgress.current}/{importProgress.total}
                         </span>
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                            {importProgress.successCount > 0 && (
-                                <span className="flex items-center gap-1 text-green-600">
-                                    <CheckCircle2 className="h-3.5 w-3.5" />
-                                    {importProgress.successCount}
-                                </span>
-                            )}
-                            {importProgress.failCount > 0 && (
-                                <span className="flex items-center gap-1 text-red-600">
-                                    <XCircle className="h-3.5 w-3.5" />
-                                    {importProgress.failCount}
-                                </span>
-                            )}
-                        </div>
                     </div>
                     <Progress
                         value={importProgress.total > 0 ? (importProgress.current / importProgress.total) * 100 : 0}
@@ -160,7 +172,13 @@ export default function DevicesPage() {
                 </div>
             )}
 
-            {devices.length === 0 ? (
+            {/* Loading state — lần đầu fetch từ server */}
+            {isLoading ? (
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                    <Loader2 className="h-10 w-10 animate-spin text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground">Đang tải danh sách thiết bị...</p>
+                </div>
+            ) : devices.length === 0 ? (
                 /* Empty state */
                 <div className="flex flex-col items-center justify-center py-20 text-center">
                     <div className="rounded-full bg-muted p-6 mb-6">
@@ -181,8 +199,8 @@ export default function DevicesPage() {
                         devices={devices}
                         onViewDevice={handleViewDevice}
                         onUpdateDevice={handleUpdateDevice}
-                        onExportDevice={exportDevice}
-                        onDeleteDevice={removeDevice}
+                        onExportDevice={handleExportDevice}
+                        onDeleteDevice={handleDeleteDevice}
                         highlightId={highlightId}
                     />
                 </div>
@@ -223,8 +241,8 @@ export default function DevicesPage() {
                 isOpen={isDetailOpen}
                 mode={detailMode}
                 onClose={handleCloseDetail}
-                onExport={exportDevice}
-                onDelete={removeDevice}
+                onExport={handleExportDevice}
+                onDelete={handleDeleteDevice}
             />
 
             {/* Create Device Dialog */}
@@ -232,15 +250,7 @@ export default function DevicesPage() {
                 isOpen={isCreateOpen}
                 onClose={() => setIsCreateOpen(false)}
                 onCreated={(deviceId) => {
-                    const device = devices.find((d) => d.id === deviceId) ||
-                        useDeviceStore.getState().devices.find((d) => d.id === deviceId);
-
-                    if (device) {
-                        // Don't open update dialog immediately, instead highlight and scroll
-                        // handleUpdateDevice(device); 
-                        // UX Change: Scroll to new device instead of opening it
-                        setHighlightId(deviceId);
-                    }
+                    setHighlightId(deviceId);
                 }}
             />
         </div>
