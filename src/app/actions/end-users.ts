@@ -22,6 +22,12 @@ export async function getEndUsers(): Promise<{
             devices:device_id (
                 name,
                 type
+            ),
+            departments:department_id (
+                name
+            ),
+            positions:position_id (
+                name
             )
         `)
         .eq("user_id", user.id)
@@ -34,6 +40,8 @@ export async function getEndUsers(): Promise<{
 
     const formattedData: EndUserWithDevice[] = (data || []).map((item: any) => ({
         ...item,
+        department: item.departments?.name || item.department || null,
+        position: item.positions?.name || item.position || null,
         device_name: item.devices?.name || null,
         device_type: item.devices?.type || null,
     }))
@@ -81,7 +89,13 @@ export async function createEndUser(endUser: EndUserInsert): Promise<{
     const { data, error } = await supabase
         .from("end_users")
         .insert({
-            ...endUser,
+            full_name: endUser.full_name,
+            email: endUser.email,
+            phone: endUser.phone,
+            department_id: endUser.department_id || null,
+            position_id: endUser.position_id || null,
+            notes: endUser.notes,
+            device_id: endUser.device_id || null,
             user_id: user.id,
         })
         .select()
@@ -128,7 +142,13 @@ export async function updateEndUser(id: string, updates: EndUserUpdate): Promise
     const { data, error } = await supabase
         .from("end_users")
         .update({
-            ...updates,
+            full_name: updates.full_name,
+            email: updates.email,
+            phone: updates.phone,
+            department_id: updates.department_id,
+            position_id: updates.position_id,
+            notes: updates.notes,
+            device_id: updates.device_id,
             updated_at: new Date().toISOString(),
         })
         .eq("id", id)

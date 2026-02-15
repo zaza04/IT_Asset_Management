@@ -43,16 +43,18 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { ComboBox } from "@/components/ui/combobox"
+import { SmartCombobox } from "@/components/ui/smart-combobox"
 import { EndUserWithDevice, EndUserInsert, EndUserUpdate } from '@/types/end-user'
 import { getEndUsers, createEndUser, updateEndUser, deleteEndUser, getAvailableDevices } from '@/app/actions/end-users'
+import { getDepartments, createDepartment, updateDepartment, deleteDepartment } from '@/app/actions/departments'
+import { getPositions, createPosition, updatePosition, deletePosition } from '@/app/actions/positions'
 
 const endUserFormSchema = z.object({
   full_name: z.string().min(1, "Họ tên không được để trống").max(100),
   email: z.string().email("Email không hợp lệ").optional().or(z.literal("")),
   phone: z.string().optional(),
-  department: z.string().optional(),
-  position: z.string().optional(),
+  department_id: z.string().optional(),
+  position_id: z.string().optional(),
   notes: z.string().optional(),
   device_id: z.string().optional(),
 })
@@ -114,8 +116,8 @@ export default function EndUsersPage() {
       full_name: "",
       email: "",
       phone: "",
-      department: "",
-      position: "",
+      department_id: "",
+      position_id: "",
       notes: "",
       device_id: "",
     },
@@ -124,25 +126,32 @@ export default function EndUsersPage() {
   const fetchData = async () => {
     setIsLoading(true)
     try {
-      const [usersResult, devicesResult] = await Promise.all([
+      const [usersResult, devicesResult, deptsResult, posResult] = await Promise.all([
         getEndUsers(),
-        getAvailableDevices()
+        getAvailableDevices(),
+        getDepartments(),
+        getPositions()
       ])
 
       if (usersResult.error) {
         console.log("Lỗi tải end-users:", usersResult.error)
         setEndUsers([])
+      } else {
+        setEndUsers(usersResult.data || [])
+      }
+
+      if (deptsResult.error) {
+        console.log("Lỗi tải departments:", deptsResult.error)
         setDepartments([])
+      } else {
+        setDepartments((deptsResult.data || []).map(d => ({ label: d.name, value: d.id })))
+      }
+
+      if (posResult.error) {
+        console.log("Lỗi tải positions:", posResult.error)
         setPositions([])
       } else {
-        const users = usersResult.data || []
-        setEndUsers(users)
-        
-        const deptSet = new Set(users.map(u => u.department).filter(Boolean) as string[])
-        const posSet = new Set(users.map(u => u.position).filter(Boolean) as string[])
-        
-        setDepartments(Array.from(deptSet).map(d => ({ label: d, value: d })).sort((a, b) => a.label.localeCompare(b.label)))
-        setPositions(Array.from(posSet).map(p => ({ label: p, value: p })).sort((a, b) => a.label.localeCompare(b.label)))
+        setPositions((posResult.data || []).map(p => ({ label: p.name, value: p.id })))
       }
 
       if (devicesResult.error) {
@@ -169,8 +178,8 @@ export default function EndUsersPage() {
         full_name: user.full_name,
         email: user.email || "",
         phone: user.phone || "",
-        department: user.department || "",
-        position: user.position || "",
+        department_id: user.department_id || "",
+        position_id: user.position_id || "",
         notes: user.notes || "",
         device_id: user.device_id || "",
       })
@@ -180,8 +189,8 @@ export default function EndUsersPage() {
         full_name: "",
         email: "",
         phone: "",
-        department: "",
-        position: "",
+        department_id: "",
+        position_id: "",
         notes: "",
         device_id: "",
       })
@@ -202,8 +211,8 @@ export default function EndUsersPage() {
         full_name: data.full_name,
         email: data.email || undefined,
         phone: data.phone || undefined,
-        department: data.department || undefined,
-        position: data.position || undefined,
+        department_id: data.department_id || undefined,
+        position_id: data.position_id || undefined,
         notes: data.notes || undefined,
         device_id: data.device_id || undefined,
       }
@@ -257,14 +266,14 @@ export default function EndUsersPage() {
     try {
       const deletePromises = Array.from(selectedIds).map(id => deleteEndUser(id))
       const results = await Promise.all(deletePromises)
-      
+
       const hasError = results.some(r => r.error)
       if (hasError) {
         toast.error("Một số xóa thất bại")
       } else {
         toast.success(`Đã xóa ${selectedIds.size} end-user`)
       }
-      
+
       setSelectedIds(new Set())
       fetchData()
     } catch (error) {
@@ -273,13 +282,15 @@ export default function EndUsersPage() {
     }
   }
 
+
+
   const filteredUsers = endUsers.filter(user => {
-    const matchSearch = !filters.search || 
+    const matchSearch = !filters.search ||
       user.full_name.toLowerCase().includes(filters.search.toLowerCase()) ||
       user.email?.toLowerCase().includes(filters.search.toLowerCase()) ||
       user.phone?.includes(filters.search)
-    const matchDepartment = !filters.department || user.department === filters.department
-    const matchPosition = !filters.position || user.position === filters.position
+    const matchDepartment = !filters.department || user.department_id === filters.department
+    const matchPosition = !filters.position || user.position_id === filters.position
     return matchSearch && matchDepartment && matchPosition
   })
 
@@ -331,38 +342,42 @@ export default function EndUsersPage() {
           onChange={(e) => setFilters(f => ({ ...f, search: e.target.value }))}
           className="max-w-[300px]"
         />
-        <Select 
-          value={filters.department || "__all__"} 
-          onValueChange={(v) => setFilters(f => ({ ...f, department: v === "__all__" ? "" : v }))}
-        >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Tất cả phòng ban" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="__all__">Tất cả phòng ban</SelectItem>
-            {departments.map(d => (
-              <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select 
-          value={filters.position || "__all__"} 
-          onValueChange={(v) => setFilters(f => ({ ...f, position: v === "__all__" ? "" : v }))}
-        >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Tất cả chức vụ" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="__all__">Tất cả chức vụ</SelectItem>
-            {positions.map(p => (
-              <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-1">
+          <Select
+            value={filters.department || "__all__"}
+            onValueChange={(v) => setFilters(f => ({ ...f, department: v === "__all__" ? "" : v }))}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Tất cả phòng ban" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">Tất cả phòng ban</SelectItem>
+              {departments.map(d => (
+                <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center gap-1">
+          <Select
+            value={filters.position || "__all__"}
+            onValueChange={(v) => setFilters(f => ({ ...f, position: v === "__all__" ? "" : v }))}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Tất cả chức vụ" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">Tất cả chức vụ</SelectItem>
+              {positions.map(p => (
+                <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         {(filters.search || filters.department || filters.position) && (
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => setFilters({ search: "", department: "", position: "" })}
           >
             Xóa lọc
@@ -573,28 +588,16 @@ export default function EndUsersPage() {
                           Sửa
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <DropdownMenuItem className="text-destructive cursor-pointer">
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Xóa
-                            </DropdownMenuItem>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Xóa End-User?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Bạn có chắc muốn xóa "{user.full_name}"? Hành động này không thể hoàn tác.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Hủy</AlertDialogCancel>
-                              <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground">
-                                Xóa
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                        <DropdownMenuItem
+                          className="text-destructive cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setDeletingId(user.id)
+                          }}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Xóa
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -604,6 +607,24 @@ export default function EndUsersPage() {
           </Table>
         </div>
       )}
+
+      {/* Dialog Delete Single User */}
+      <AlertDialog open={!!deletingId} onOpenChange={(open) => !open && setDeletingId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xóa End-User?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc muốn xóa "{endUsers.find(u => u.id === deletingId)?.full_name}"? Hành động này không thể hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground">
+              Xóa
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
@@ -665,25 +686,54 @@ export default function EndUsersPage() {
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="department"
+                  name="department_id"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel>Phòng ban</FormLabel>
-                      <FormControl>
-                        <ComboBox
-                          value={field.value}
-                          onValueChange={field.onChange}
-                          options={departments}
-                          placeholder="Chọn phòng ban..."
-                          creatable
-                          createLabel="Thêm phòng ban mới"
-                          onCreateNew={(value) => {
-                            const newDept = { label: value, value }
-                            setDepartments([...departments, newDept].sort((a, b) => a.label.localeCompare(b.label)))
-                            field.onChange(value)
-                          }}
-                        />
-                      </FormControl>
+                      <SmartCombobox
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        options={departments}
+                        placeholder="Chọn phòng ban..."
+                        searchPlaceholder="Tìm kiếm phòng ban..."
+                        emptyText="Không tìm thấy phòng ban nào."
+                        creatable
+                        createLabel="Thêm phòng ban mới"
+                        onCreate={async (value) => {
+                          const result = await createDepartment({ name: value })
+                          if (result.error) {
+                            toast.error(result.error)
+                            throw new Error(result.error)
+                          }
+                          await fetchData()
+                          if (result.data?.id) {
+                            field.onChange(result.data.id)
+                          }
+                          toast.success("Tạo phòng ban thành công!")
+                        }}
+                        editable
+                        onEdit={async (id, newValue) => {
+                          if (!newValue || newValue === departments.find(d => d.value === id)?.label) return
+                          const result = await updateDepartment(id, { name: newValue })
+                          if (result.error) {
+                            toast.error(result.error)
+                            throw new Error(result.error)
+                          }
+                          await fetchData()
+                          toast.success("Cập nhật phòng ban thành công!")
+                        }}
+                        deletable
+                        onDelete={async (id) => {
+                          const result = await deleteDepartment(id)
+                          if (result.error) {
+                            toast.error(result.error)
+                            throw new Error(result.error)
+                          }
+                          await fetchData()
+                          if (field.value === id) field.onChange("")
+                          toast.success("Xóa phòng ban thành công!")
+                        }}
+                      />
                       <FormMessage />
                     </FormItem>
                   )}
@@ -691,25 +741,54 @@ export default function EndUsersPage() {
 
                 <FormField
                   control={form.control}
-                  name="position"
+                  name="position_id"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel>Chức vụ</FormLabel>
-                      <FormControl>
-                        <ComboBox
-                          value={field.value}
-                          onValueChange={field.onChange}
-                          options={positions}
-                          placeholder="Chọn chức vụ..."
-                          creatable
-                          createLabel="Thêm chức vụ mới"
-                          onCreateNew={(value) => {
-                            const newPos = { label: value, value }
-                            setPositions([...positions, newPos].sort((a, b) => a.label.localeCompare(b.label)))
-                            field.onChange(value)
-                          }}
-                        />
-                      </FormControl>
+                      <SmartCombobox
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        options={positions}
+                        placeholder="Chọn chức vụ..."
+                        searchPlaceholder="Tìm kiếm chức vụ..."
+                        emptyText="Không tìm thấy chức vụ nào."
+                        creatable
+                        createLabel="Thêm chức vụ mới"
+                        onCreate={async (value) => {
+                          const result = await createPosition({ name: value })
+                          if (result.error) {
+                            toast.error(result.error)
+                            throw new Error(result.error)
+                          }
+                          await fetchData()
+                          if (result.data?.id) {
+                            field.onChange(result.data.id)
+                          }
+                          toast.success("Tạo chức vụ thành công!")
+                        }}
+                        editable
+                        onEdit={async (id, newValue) => {
+                          if (!newValue || newValue === positions.find(p => p.value === id)?.label) return
+                          const result = await updatePosition(id, { name: newValue })
+                          if (result.error) {
+                            toast.error(result.error)
+                            throw new Error(result.error)
+                          }
+                          await fetchData()
+                          toast.success("Cập nhật chức vụ thành công!")
+                        }}
+                        deletable
+                        onDelete={async (id) => {
+                          const result = await deletePosition(id)
+                          if (result.error) {
+                            toast.error(result.error)
+                            throw new Error(result.error)
+                          }
+                          await fetchData()
+                          if (field.value === id) field.onChange("")
+                          toast.success("Xóa chức vụ thành công!")
+                        }}
+                      />
                       <FormMessage />
                     </FormItem>
                   )}
@@ -781,18 +860,18 @@ export default function EndUsersPage() {
           <DialogHeader>
             <DialogTitle>Chi tiết End-User</DialogTitle>
           </DialogHeader>
-          
+
           {(() => {
             const user = endUsers.find(u => u.id === viewingId)
             if (!user) return null
-            
+
             return (
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
                   <label className="text-sm font-medium">Họ và tên</label>
                   <Input value={user.full_name} disabled />
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
                     <label className="text-sm font-medium">Email</label>
@@ -803,7 +882,7 @@ export default function EndUsersPage() {
                     <Input value={user.phone || '-'} disabled />
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
                     <label className="text-sm font-medium">Phòng ban</label>
@@ -814,15 +893,15 @@ export default function EndUsersPage() {
                     <Input value={user.position || '-'} disabled />
                   </div>
                 </div>
-                
+
                 <div className="grid gap-2">
                   <label className="text-sm font-medium">Thiết bị</label>
-                  <Input 
-                    value={user.device_name ? `${user.device_name} (${user.device_type || 'N/A'})` : 'Chưa assign'} 
-                    disabled 
+                  <Input
+                    value={user.device_name ? `${user.device_name} (${user.device_type || 'N/A'})` : 'Chưa assign'}
+                    disabled
                   />
                 </div>
-                
+
                 <div className="grid gap-2">
                   <label className="text-sm font-medium">Ghi chú</label>
                   <Textarea value={user.notes || '-'} disabled className="min-h-[80px]" />
@@ -830,7 +909,7 @@ export default function EndUsersPage() {
               </div>
             )
           })()}
-          
+
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setViewingId(null)}>
               Đóng
