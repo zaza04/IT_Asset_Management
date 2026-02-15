@@ -4,26 +4,47 @@ import { useEffect, useRef } from "react"
 import { useAuth } from "@/contexts/AuthContext"
 import { useTheme } from "next-themes"
 import { updateProfileSettings, getProfile } from "@/app/actions/profile"
+import { useAppearanceStore } from "@/stores/useAppearanceStore"
+import { useThemeManager } from "@/hooks/use-theme-manager"
+import { tweakcnThemes } from "@/config/theme-data"
 
 export function ThemeSyncProvider({ children }: { children: React.ReactNode }) {
-    const { isAuthenticated, user } = useAuth()
+    const { isAuthenticated, user, isLoading: isAuthLoading } = useAuth()
     const { theme, setTheme } = useTheme()
+    const { applyTheme, applyTweakcnTheme, applyRadius, resetTheme, isDarkMode } = useThemeManager()
     const isSyncedRef = useRef(false)
     const lastSyncedThemeRef = useRef<string | null>(null)
 
-    // 1. Initial Sync: Lấy theme từ DB khi user login
+    // Get state and setters from appearance store
+    const { 
+        selectedTheme, 
+        setSelectedTheme, 
+        selectedTweakcnTheme, 
+        setSelectedTweakcnTheme,
+        selectedRadius 
+    } = useAppearanceStore()
+
+    // 1. Initial Sync: Lấy theme từ DB khi user login + auth đã load xong
     useEffect(() => {
-        if (!isAuthenticated || !user) return
+        if (isAuthLoading || !isAuthenticated || !user) return
+        if (isSyncedRef.current) return
 
         const syncFromDb = async () => {
             try {
                 const { data } = await getProfile()
                 if (data?.settings) {
                     const settings = data.settings as Record<string, any>
-                    // Nếu DB có theme, apply vào client
                     if (settings.theme) {
-                        setTheme(settings.theme)
-                        lastSyncedThemeRef.current = settings.theme
+                        const dbTheme = settings.theme
+                        if (dbTheme !== theme) {
+                            setTheme(dbTheme)
+                        }
+                        if (dbTheme.startsWith('tweakcn-')) {
+                            setSelectedTweakcnTheme(dbTheme.replace('tweakcn-', ''))
+                        } else if (dbTheme === 'default' || dbTheme === 'dark' || dbTheme === 'light') {
+                            setSelectedTheme(dbTheme)
+                        }
+                        lastSyncedThemeRef.current = dbTheme
                     }
                 }
             } catch (error) {
@@ -34,14 +55,38 @@ export function ThemeSyncProvider({ children }: { children: React.ReactNode }) {
         }
 
         syncFromDb()
-    }, [isAuthenticated, user, setTheme])
+    }, [isAuthenticated, user, isAuthLoading, setTheme, setSelectedTheme, setSelectedTweakcnTheme, theme])
 
-    // 2. Sync to DB: Khi user đổi theme (sau khi đã initial sync)
+    // 2. Apply CSS variables - LUÔN LUÔN chạy khi store thay đổi
+    // Đây là logic QUAN TRỌNG để theme được apply toàn website
     useEffect(() => {
-        if (!isAuthenticated || !isSyncedRef.current) return
+        // Apply tweakcn theme (custom colors) if selected
+        if (selectedTweakcnTheme) {
+            const selectedPreset = tweakcnThemes.find(t => t.value === selectedTweakcnTheme)?.preset
+            if (selectedPreset) {
+                applyTweakcnTheme(selectedPreset, isDarkMode)
+            }
+        } 
+        // Apply shadcn theme if selected
+        else if (selectedTheme && selectedTheme !== 'default') {
+            applyTheme(selectedTheme, isDarkMode)
+        }
+        // Otherwise reset to default
+        else {
+            resetTheme()
+        }
+
+        // Apply radius
+        if (selectedRadius && selectedRadius !== '0.5rem') {
+            applyRadius(selectedRadius)
+        }
+    }, [selectedTheme, selectedTweakcnTheme, selectedRadius, isDarkMode, applyTheme, applyTweakcnTheme, applyRadius, resetTheme])
+
+    // 3. Sync to DB: Khi user đổi theme (sau khi đã initial sync và auth load xong)
+    useEffect(() => {
+        if (isAuthLoading || !isAuthenticated || !isSyncedRef.current) return
         if (!theme) return
 
-        // Nếu theme hiện tại giống theme vừa sync từ DB (hoặc vừa lưu), bỏ qua
         if (theme === lastSyncedThemeRef.current) return
 
         const timer = setTimeout(async () => {
@@ -54,7 +99,7 @@ export function ThemeSyncProvider({ children }: { children: React.ReactNode }) {
         }, 1000)
 
         return () => clearTimeout(timer)
-    }, [theme, isAuthenticated])
+    }, [theme, isAuthenticated, isAuthLoading])
 
     return <>{children}</>
 }

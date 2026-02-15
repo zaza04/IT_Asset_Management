@@ -1,19 +1,16 @@
 "use client"
 
 import React from 'react'
-import { Layout, Palette, RotateCcw, Settings, X } from 'lucide-react'
+import { Layout, Palette, RotateCcw, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useThemeManager } from '@/hooks/use-theme-manager'
 import { useSidebarConfig } from '@/contexts/sidebar-context'
 import { useAppearanceStore } from '@/stores/useAppearanceStore'
-import { tweakcnThemes } from '@/config/theme-data'
 import { ThemeTab } from './theme-tab'
 import { LayoutTab } from './layout-tab'
-import { ImportModal } from './import-modal'
 import { cn } from '@/lib/utils'
-import type { ImportedTheme } from '@/types/theme-customizer'
 
 interface ThemeCustomizerProps {
   open: boolean
@@ -22,64 +19,21 @@ interface ThemeCustomizerProps {
 
 
 export function CustomizerContent({ className }: { className?: string }) {
-  const { applyImportedTheme, isDarkMode, resetTheme, applyRadius, setBrandColorsValues: setManagerBrandColors, applyTheme, applyTweakcnTheme } = useThemeManager()
+  const { resetTheme, applyRadius } = useThemeManager()
   const { config: sidebarConfig, updateConfig: updateSidebarConfig } = useSidebarConfig()
 
   const {
-    selectedTheme, setSelectedTheme,
-    selectedTweakcnTheme, setSelectedTweakcnTheme,
-    selectedRadius, setSelectedRadius,
-    importedTheme, setImportedTheme,
-    brandColorsValues, setBrandColorsValues,
     resetAppearance,
   } = useAppearanceStore()
 
   const [activeTab, setActiveTab] = React.useState("theme")
-  const [importModalOpen, setImportModalOpen] = React.useState(false)
 
   const handleReset = () => {
-    // Reset Zustand store
     resetAppearance()
-
-    // Reset CSS variables
     resetTheme()
     applyRadius("0.5rem")
-    setManagerBrandColors({})
-
-    // Reset sidebar
     updateSidebarConfig({ variant: "inset", collapsible: "offcanvas", side: "left" })
   }
-
-  const handleImport = (themeData: ImportedTheme) => {
-    setImportedTheme(themeData)
-    applyImportedTheme(themeData, isDarkMode)
-  }
-
-  const handleImportClick = () => {
-    setImportModalOpen(true)
-  }
-
-  // Stable key cho importedTheme để track thay đổi mà không gây infinite loop
-  const importedThemeKey = importedTheme ? JSON.stringify(Object.keys(importedTheme)) : null
-
-  // Apply persisted theme on mount + when dark mode changes
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- Chỉ react theo data values, không theo callback references
-  React.useEffect(() => {
-    if (importedTheme) {
-      applyImportedTheme(importedTheme, isDarkMode)
-    } else if (selectedTweakcnTheme) {
-      const selectedPreset = tweakcnThemes.find(t => t.value === selectedTweakcnTheme)?.preset
-      if (selectedPreset) {
-        applyTweakcnTheme(selectedPreset, isDarkMode)
-      }
-    } else if (selectedTheme && selectedTheme !== 'default') {
-      applyTheme(selectedTheme, isDarkMode)
-    }
-
-    if (selectedRadius && selectedRadius !== '0.5rem') {
-      applyRadius(selectedRadius)
-    }
-  }, [isDarkMode, selectedTheme, selectedTweakcnTheme, selectedRadius, importedThemeKey])
 
   return (
     <div className={cn("flex flex-col space-y-4", className)}>
@@ -102,21 +56,13 @@ export function CustomizerContent({ className }: { className?: string }) {
         </div>
 
         <TabsContent value="theme" className="flex-1 mt-0 space-y-4">
-          <ThemeTab
-            onImportClick={handleImportClick}
-          />
+          <ThemeTab />
         </TabsContent>
 
         <TabsContent value="layout" className="flex-1 mt-0">
           <LayoutTab />
         </TabsContent>
       </Tabs>
-
-      <ImportModal
-        open={importModalOpen}
-        onOpenChange={setImportModalOpen}
-        onImport={handleImport}
-      />
     </div>
   )
 }
@@ -142,7 +88,6 @@ export function ThemeCustomizer({ open, onOpenChange }: ThemeCustomizerProps) {
   )
 }
 
-// Floating trigger button - positioned dynamically based on sidebar side
 export function ThemeCustomizerTrigger({ onClick }: { onClick: () => void }) {
   const { config: sidebarConfig } = useSidebarConfig()
 

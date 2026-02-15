@@ -1,15 +1,11 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-import type { ImportedTheme } from '@/types/theme-customizer';
-
 interface AppearanceState {
     // Theme selections
     selectedTheme: string;
     selectedTweakcnTheme: string;
     selectedRadius: string;
-    importedTheme: ImportedTheme | null;
-    brandColorsValues: Record<string, string>;
 
     // Sidebar config
     sidebarVariant: 'sidebar' | 'floating' | 'inset';
@@ -20,8 +16,6 @@ interface AppearanceState {
     setSelectedTheme: (theme: string) => void;
     setSelectedTweakcnTheme: (theme: string) => void;
     setSelectedRadius: (radius: string) => void;
-    setImportedTheme: (theme: ImportedTheme | null) => void;
-    setBrandColorsValues: (values: Record<string, string>) => void;
     resetAppearance: () => void;
 
     // Actions — Sidebar
@@ -32,8 +26,6 @@ const DEFAULT_STATE = {
     selectedTheme: 'default',
     selectedTweakcnTheme: '',
     selectedRadius: '0.5rem',
-    importedTheme: null,
-    brandColorsValues: {},
     sidebarVariant: 'inset' as const,
     sidebarCollapsible: 'offcanvas' as const,
     sidebarSide: 'left' as const,
@@ -45,17 +37,12 @@ export const useAppearanceStore = create<AppearanceState>()(
             ...DEFAULT_STATE,
 
             setSelectedTheme: (theme) =>
-                set({ selectedTheme: theme, selectedTweakcnTheme: '', importedTheme: null, brandColorsValues: {} }),
+                set({ selectedTheme: theme, selectedTweakcnTheme: '' }),
 
             setSelectedTweakcnTheme: (theme) =>
-                set({ selectedTweakcnTheme: theme, selectedTheme: '', importedTheme: null, brandColorsValues: {} }),
+                set({ selectedTweakcnTheme: theme, selectedTheme: '' }),
 
             setSelectedRadius: (radius) => set({ selectedRadius: radius }),
-
-            setImportedTheme: (theme) =>
-                set({ importedTheme: theme, selectedTheme: '', selectedTweakcnTheme: '' }),
-
-            setBrandColorsValues: (values) => set({ brandColorsValues: values }),
 
             resetAppearance: () => set(DEFAULT_STATE),
 
@@ -68,7 +55,6 @@ export const useAppearanceStore = create<AppearanceState>()(
         }),
         {
             name: 'appearance-storage',
-            // Default storage is localStorage, which is fine for UI preferences
         }
     )
 );
