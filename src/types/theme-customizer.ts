@@ -34,12 +34,4 @@ export interface RadiusOption {
   value: string
 }
 
-export interface BrandColor {
-  name: string
-  cssVar: string
-}
 
-export interface ImportedTheme {
-  light: Record<string, string>
-  dark: Record<string, string>
-}
